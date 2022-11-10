@@ -1,49 +1,57 @@
 <?xml version="1.0"?>
-<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="alleyinteractive/wp-cli-bulk-task" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/squizlabs/PHP_CodeSniffer/master/phpcs.xsd">
-    <description>PHP_CodeSniffer standard for alleyinteractive/wp-cli-bulk-task.</description>
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+				 name="alleyinteractive/wp-cli-bulk-task"
+				 xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/squizlabs/PHP_CodeSniffer/master/phpcs.xsd">
+	<description>PHP_CodeSniffer standard for alleyinteractive/wp-cli-bulk-task.
+	</description>
 
-    <!-- Include Alley rules. -->
-    <rule ref="Alley-Interactive" />
+	<!-- Include Alley rules. -->
+	<rule ref="Alley-Interactive"/>
 
-    <!-- Set the text domain for i18n. -->
-    <rule ref="WordPress.WP.I18n">
-        <properties>
-            <property name="text_domain" type="array" value="alleyinteractive-wp-cli-bulk-task" />
-        </properties>
-    </rule>
+	<!-- Ignore filename conventions, since we are using a PSR-4 autoloader. -->
+	<rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
+		<exclude-pattern>./src/</exclude-pattern>
+	</rule>
 
-    <!-- Set the prefixes for functions etc. -->
-    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
-        <properties>
-            <property name="prefixes" type="array" value="alleyinteractive" />
-        </properties>
-    </rule>
+	<!-- Set the text domain for i18n. -->
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array" value="alleyinteractive-wp-cli-bulk-task" />
+		</properties>
+	</rule>
 
-    <!--
-    Pass some flags to PHPCS:
-      p flag: Show progress of the run.
-      s flag: Show sniff codes in all reports.
-    -->
-    <arg value="ps" />
+	<!-- Set the prefixes for functions etc. -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array" value="alley_interactive" />
+		</properties>
+	</rule>
 
-    <!-- Whenever possible, cache the scan results and re-use those for unchanged files on the next scan. -->
-    <arg name="cache" value=".phpcs-cache.json" />
+	<!--
+	Pass some flags to PHPCS:
+		p flag: Show progress of the run.
+		s flag: Show sniff codes in all reports.
+	-->
+	<arg value="ps"/>
 
-    <!-- Strip the filepaths down to the relevant bit. -->
-    <arg name="basepath" value="./" />
+	<!-- Whenever possible, cache the scan results and re-use those for unchanged files on the next scan. -->
+	<arg name="cache" value=".phpcs-cache.json"/>
 
-    <!-- Check up to 20 files simultaneously. -->
-    <arg name="parallel" value="20" />
+	<!-- Strip the filepaths down to the relevant bit. -->
+	<arg name="basepath" value="./"/>
 
-    <!-- Set severity to 1 to see everything that isn't effectively turned off. -->
-    <arg name="severity" value="1" />
+	<!-- Check up to 20 files simultaneously. -->
+	<arg name="parallel" value="20"/>
 
-    <!-- Exclude the composer vendor folder. -->
-    <exclude-pattern>vendor/</exclude-pattern>
+	<!-- Set severity to 1 to see everything that isn't effectively turned off. -->
+	<arg name="severity" value="1"/>
 
-    <!-- Check for cross-version support for PHP 8.0 and higher. -->
-    <config name="testVersion" value="8.0-"/>
+	<!-- Exclude the composer vendor folder. -->
+	<exclude-pattern>vendor/</exclude-pattern>
 
-    <!-- Ignore compatibility problems with WordPress versions below this value. -->
-    <config name="minimum_supported_wp_version" value="6.1" />
+	<!-- Check for cross-version support for PHP 8.0 and higher. -->
+	<config name="testVersion" value="8.0-"/>
+
+	<!-- Ignore compatibility problems with WordPress versions below this value. -->
+	<config name="minimum_supported_wp_version" value="6.1"/>
 </ruleset>

@@ -5,6 +5,11 @@
       "email": "info@alley.com"
     }
   ],
+  "autoload": {
+    "psr-4": {
+      "Alley_Interactive\\WP_CLI_Bulk_Task\\": "src"
+    }
+  },
   "config": {
     "allow-plugins": {
       "dealerdirect/phpcodesniffer-composer-installer": true
