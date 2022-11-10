@@ -1,0 +1,35 @@
+{
+  "authors": [
+    {
+      "name": "Alley",
+      "email": "info@alley.com"
+    }
+  ],
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    },
+    "apcu-autoloader": true,
+    "optimize-autoloader": true,
+    "sort-packages": true
+  },
+  "description": "A library to assist with running performant bulk tasks against posts via WP-CLI.",
+  "license": "GPL-2.0-or-later",
+  "name": "alleyinteractive/wp-cli-bulk-task",
+  "require": {
+    "php": ">=8.0"
+  },
+  "require-dev": {
+    "alleyinteractive/alley-coding-standards": "^0.3"
+  },
+  "scripts": {
+    "lint": "@phpcs",
+    "lint:fix": "@phpcbf",
+    "phpcbf": "phpcbf .",
+    "phpcs": "phpcs .",
+    "test": [
+      "@lint"
+    ]
+  },
+  "type": "project"
+}
