@@ -63,24 +63,10 @@ class My_Custom_CLI_Command extends WP_CLI_Command {
 	 */
 	public function search_replace( $args, $assoc_args ) {
 		list( $search, $replace ) = $args;
-		$dry_run = ! empty( $assoc_args['dry-run'] );
+		$dry_run                  = ! empty( $assoc_args['dry-run'] );
+		$query_builder            = $this->get_bulk_task_query_builder();
 		$this->bulk_task(
-			[
-				'table' => 'posts',
-				'search' => [
-					'relation' => 'OR',
-					[
-						'compare' => 'LIKE',
-						'key'     => 'post_content',
-						'value'   => $search,
-					],
-					[
-						'compare' => 'LIKE',
-						'key'     => 'post_excerpt',
-						'value'   => $search,
-					],
-				],
-			],
+			$query_builder->,
 			function( $post_id ) use ( $dry_run, $replace, $search ) {
 				$post = get_post( $post_id );
 				foreach ( [ 'post_content', 'post_excerpt' ] as $property ) {

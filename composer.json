@@ -5,24 +5,29 @@
       "email": "info@alley.com"
     }
   ],
-  "autoload": {
-    "psr-4": {
-      "Alley_Interactive\\WP_CLI_Bulk_Task\\": "src"
-    }
-  },
   "config": {
     "allow-plugins": {
-      "dealerdirect/phpcodesniffer-composer-installer": true
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "alleyinteractive/composer-wordpress-autoloader": true
     },
     "apcu-autoloader": true,
     "optimize-autoloader": true,
     "sort-packages": true
   },
   "description": "A library to assist with running performant bulk tasks against posts via WP-CLI.",
+  "extra": {
+    "wordpress-autoloader": {
+      "autoload": {
+        "Alley_Interactive\\WP_CLI_Bulk_Task\\": "src/"
+      }
+    }
+  },
   "license": "GPL-2.0-or-later",
   "name": "alleyinteractive/wp-cli-bulk-task",
   "require": {
-    "php": ">=8.0"
+    "php": ">=8.0",
+    "alleyinteractive/composer-wordpress-autoloader": "^1.0",
+    "illuminate/database": "^9.39"
   },
   "require-dev": {
     "alleyinteractive/alley-coding-standards": "^0.3"

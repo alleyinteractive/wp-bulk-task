@@ -8,11 +8,6 @@
 	<!-- Include Alley rules. -->
 	<rule ref="Alley-Interactive"/>
 
-	<!-- Ignore filename conventions, since we are using a PSR-4 autoloader. -->
-	<rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
-		<exclude-pattern>./src/</exclude-pattern>
-	</rule>
-
 	<!-- Set the text domain for i18n. -->
 	<rule ref="WordPress.WP.I18n">
 		<properties>
