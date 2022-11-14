@@ -5,6 +5,7 @@
  * @package alleyinteractive/wp-cli-bulk-task
  */
 
+
 namespace Alley_Interactive\WP_CLI_Bulk_Task;
 
 use cli\progress\Bar;
@@ -122,10 +123,9 @@ class Bulk_Task {
 
 		// Maybe output progress.
 		if ( isset( $this->progress ) ) {
-			// Determine if we need to update the progress meter.
 			$current_page = floor( $this->min_id / $this->page_size );
-			if ( $current_page > $this->page_current ) {
-				$this->page_current = $current_page;
+			while ( $this->page_current < $current_page ) {
+				$this->page_current ++;
 				$this->progress->tick();
 			}
 		}
@@ -136,6 +136,11 @@ class Bulk_Task {
 	 */
 	protected function after_run(): void {
 		wp_defer_term_counting( false );
+
+		// Close out the progress bar, if it was started.
+		if ( isset( $this->progress ) ) {
+			$this->progress->finish();
+		}
 	}
 
 	/**
@@ -169,18 +174,15 @@ class Bulk_Task {
 	 * @return string WHERE clause with our pagination added.
 	 */
 	public function filter__posts_where( $where, $query ) {
-		if ( spl_object_hash( $query ) === $this->bulk_task_object_hash ) {
+		if ( spl_object_hash( $query ) === $this->object_hash ) {
 			global $wpdb;
 
-			return str_replace(
-				'1=1',
-				sprintf(
-					'%s.ID > %d AND %s.ID <= %d',
-					$wpdb->posts,
-					$this->min_id,
-					$wpdb->posts,
-					$this->max_id
-				),
+			return sprintf(
+				'AND %s.ID > %d AND %s.ID <= %d %s',
+				$wpdb->posts,
+				$this->min_id,
+				$wpdb->posts,
+				$this->max_id,
 				$where
 			);
 		}
@@ -193,8 +195,8 @@ class Bulk_Task {
 	 * the progress.
 	 *
 	 * @param array    $args {
-	 *     Optional. WP_Query args. Some have overridden defaults, and some are
-	 *     fixed. Anything not mentioned below will operate as normal.
+	 *     WP_Query args. Some have overridden defaults, and some are fixed.
+	 *     Anything not mentioned below will operate as normal.
 	 *
 	 *     @type string $fields              Always 'ids'.
 	 *     @type bool   $ignore_sticky_posts Always true.
@@ -206,8 +208,8 @@ class Bulk_Task {
 	 *     @type int    $posts_per_page      Defaults to 100.
 	 *     @type bool   $suppress_filters    Always false.
 	 * }
-	 * @param callable $callable Required. Callback function to invoke for each
-	 *                            post. The callable will be passed a post ID.
+	 * @param callable $callable Callback function to invoke for each post.
+	 *                           The callable will be passed a post ID.
 	 */
 	public function run( array $args, callable $callable ): void {
 		global $wpdb;
@@ -233,7 +235,7 @@ class Bulk_Task {
 		// Set the page size to 10x posts_per_page.
 		$this->page_size = $args['posts_per_page'] * 10;
 
-		// Ensure $bulk_task_min_id always starts at 0.
+		// Set the min ID from the cursor.
 		$this->min_id = $this->cursor->get();
 
 		// Set the max ID from the database.

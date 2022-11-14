@@ -8,9 +8,9 @@ A library to assist with running performant bulk tasks against posts via WP-CLI.
 
 This package provides a library to make it easier to run bulk tasks against a
 WordPress database using WP-CLI in a performant way. It includes functionality
-to search through a WordPress database for posts that match provided search
-criteria and keeps a cursor of its location within the database in case it is
-interrupted and needs to start again.
+to search through a WordPress database for posts using WP_Query-style arguments
+and keeps a cursor of its location within the database in case it is interrupted
+and needs to start again.
 
 
 ## Releases
@@ -21,7 +21,7 @@ semantic versioning conventions.
 
 ### Install
 
-Requires Composer and PHP >= 8.0.
+Requires Composer and PHP >= 8.0. Must be used in a WP-CLI command context.
 
 
 ### Use
@@ -38,14 +38,13 @@ Ensure that the Composer autoloader is loaded into your project:
 require_once __DIR__ . '/vendor/autoload.php';
 ```
 
-Then include the trait and use it in your custom CLI command:
+Then use the class in your custom CLI command:
 
 ```php
 class My_Custom_CLI_Command extends WP_CLI_Command {
-	use Alley_Interactive\WP_CLI_Bulk_Task\Bulk_Task;
 
 	/**
-	 * A more performant search-replace for post content and post excerpts.
+	 * Replace all instances of 'apple' with 'banana' in post content.
 	 *
 	 * ## OPTIONS
 	 *
@@ -57,35 +56,48 @@ class My_Custom_CLI_Command extends WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *     wp my-custom-cli-command search-replace
+	 *     wp my-custom-cli-command bananaify
 	 *
-	 * @subcommand search-replace
+	 * @subcommand bananaify
 	 */
-	public function search_replace( $args, $assoc_args ) {
-		list( $search, $replace ) = $args;
-		$dry_run                  = ! empty( $assoc_args['dry-run'] );
-		$query_builder            = $this->get_bulk_task_query_builder();
-		$this->bulk_task(
-			$query_builder->,
-			function( $post_id ) use ( $dry_run, $replace, $search ) {
+	public function bananaify( $args, $assoc_args ) {
+		$bulk_task = new \Alley_Interactive\WP_CLI_Bulk_Task\Bulk_Task( 'bananaify' );
+
+		// Handle rewind requests.
+		if ( ! empty( $assoc_args['rewind'] ) ) {
+			$bulk_task->cursor->reset();
+			WP_CLI::log( __( 'Rewound the cursor. Run again without the --rewind flag to process posts.', 'my-textdomain' ) );
+			return;
+		}
+
+		// Set up and run the bulk task.
+		$dry_run = ! empty( $assoc_args['dry-run'] );
+		$bulk_task->run(
+			[
+				'post_status' => 'publish',
+				'post_type'   => 'post',
+				'tax_query'   => [
+					[
+						'field'    => 'slug',
+						'taxonomy' => 'category',
+						'terms'    => 'fruit',
+					],
+				],
+			],
+			function( $post_id ) use ( $dry_run ) {
 				$post = get_post( $post_id );
-				foreach ( [ 'post_content', 'post_excerpt' ] as $property ) {
-					if ( false !== strpos( $post->$property, $search ) ) {
-						$new_value = str_replace( $search, $replace, $post->$property );
-						if ( $dry_run ) {
-							WP_CLI::log( 'Old ' . $property . ': ' . $post->$property );
-							WP_CLI::log( 'New ' . $property . ': ' . $new_property );
-						} else {
-							$post->$property = $new_property;
-						}
+				if ( false !== strpos( $post->post_content, 'apple' ) ) {
+					$new_value = str_replace( 'apple', 'banana', $post->post_content );
+					if ( $dry_run ) {
+						WP_CLI::log( 'Old post_content: ' . $post->post_content );
+						WP_CLI::log( 'New post_content: ' . $new_value );
+					} else {
+						$post->post_content = $new_value;
+						wp_update_post( $post );
 					}
 				}
-				if ( ! $dry_run ) {
-					wp_update_post( $post );
-				}
-			},
-			$assoc_args
-		)
+			}
+		);
 	}
 }
 ```
@@ -93,13 +105,38 @@ class My_Custom_CLI_Command extends WP_CLI_Command {
 
 ### From Source
 
-TODO: Continue filling out README from here.
+To work on this project locally, first add the repository to your project's
+`composer.json`:
 
-This section describes how a developer should install or use this project from this repository. For compiled/built projects, use of a [makefile](https://www.gnu.org/software/make/manual/make.html) is encouraged, but not required. If you don't provide orchestration via a makefile or build script, include the code required to start the project from scratch in this section, eg:
+```json
+{
+	"repositories": [
+		{
+			"type": "path",
+			"url": "../path/to/wp-cli-bulk-task",
+			"options": {
+				"symlink": true
+			}
+		}
+	]
+}
+```
+
+Next, add the local development files to the `require` section of
+`composer.json`:
+
+```json
+{
+	"require": {
+		"alleyinteractive/wp-cli-bulk-task": "@dev"
+	}
+}
+```
+
+Finally, update composer to use the local copy of the package:
 
 ```sh
-$ git clone my-package
-$ ...
+composer update alleyinteractive/wp-cli-bulk-task --prefer-source
 ```
 
 

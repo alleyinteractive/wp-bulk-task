@@ -7,8 +7,8 @@
   ],
   "config": {
     "allow-plugins": {
-      "dealerdirect/phpcodesniffer-composer-installer": true,
-      "alleyinteractive/composer-wordpress-autoloader": true
+      "alleyinteractive/composer-wordpress-autoloader": true,
+      "dealerdirect/phpcodesniffer-composer-installer": true
     },
     "apcu-autoloader": true,
     "optimize-autoloader": true,
