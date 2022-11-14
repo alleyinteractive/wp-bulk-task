@@ -7,9 +7,8 @@
 
 namespace Alley_Interactive\WP_Bulk_Task;
 
-use cli\progress\Bar;
+use Alley_Interactive\WP_Bulk_Task\Progress\Progress;
 use WP_Query;
-use function WP_CLI\Utils\make_progress_bar;
 
 /**
  * A class that provides performant bulk task functionality.
@@ -47,13 +46,6 @@ class Bulk_Task {
 	protected string $object_hash;
 
 	/**
-	 * Maintain a progress bar for the current bulk task.
-	 *
-	 * @var Bar
-	 */
-	protected Bar $progress;
-
-	/**
 	 * Store the last output progress tick ID for updating the progress bar.
 	 *
 	 * @var int
@@ -73,9 +65,10 @@ class Bulk_Task {
 	 * Constructor. Accepts a unique key, which is used to keep track of the
 	 * cursor within the database.
 	 *
-	 * @param string $key A unique key for this bulk task, used to manage the cursor.
+	 * @param string    $key      A unique key for this bulk task, used to manage the cursor.
+	 * @param ?Progress $progress An object to handle progress updates as the task runs.
 	 */
-	public function __construct( public string $key ) {
+	public function __construct( public string $key, private ?Progress $progress = null ) {
 		$this->cursor = new Cursor( $key );
 	}
 
@@ -117,11 +110,9 @@ class Bulk_Task {
 			}
 		}
 
-		// Maybe output progress.
-		if ( isset( $this->progress ) ) {
-			$this->progress->tick( $this->min_id - $this->progress_tick_id );
-			$this->progress_tick_id = $this->min_id;
-		}
+		// Update progress.
+		$this->progress?->tick( $this->min_id - $this->progress_tick_id );
+		$this->progress_tick_id = $this->min_id;
 	}
 
 	/**
@@ -129,11 +120,7 @@ class Bulk_Task {
 	 */
 	protected function after_run(): void {
 		wp_defer_term_counting( false );
-
-		// Close out the progress bar, if it was started.
-		if ( isset( $this->progress ) ) {
-			$this->progress->finish();
-		}
+		$this->progress?->finish();
 	}
 
 	/**
@@ -141,16 +128,7 @@ class Bulk_Task {
 	 */
 	protected function before_run(): void {
 		wp_defer_term_counting( true );
-
-		// Try to set up a progress bar. This will only work if output is not piped.
-		$progress = make_progress_bar(
-			// translators: Unique key for task.
-			sprintf( __( 'Processing posts for task %s', 'alleyinteractive-wp-bulk-task' ), $this->key ),
-			$this->max_id
-		);
-		if ( $progress instanceof Bar ) {
-			$this->progress = $progress;
-		}
+		$this->progress?->set_total( $this->max_id );
 	}
 
 	/**
