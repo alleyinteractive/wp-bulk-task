@@ -47,32 +47,27 @@ class Bulk_Task {
 	protected string $object_hash;
 
 	/**
-	 * Keeps track of the current page of results. Used for outputting progress.
-	 *
-	 * @var int
-	 */
-	protected int $page_current;
-
-	/**
-	 * Keeps track of the maximum number of pages for results. Used for outputting progress.
-	 *
-	 * @var int
-	 */
-	protected int $page_max;
-
-	/**
-	 * The page size when looking for a slice of results. 10x the posts_per_page.
-	 *
-	 * @var int
-	 */
-	protected int $page_size;
-
-	/**
 	 * Maintain a progress bar for the current bulk task.
 	 *
 	 * @var Bar
 	 */
 	protected Bar $progress;
+
+	/**
+	 * Store the last output progress tick ID for updating the progress bar.
+	 *
+	 * @var int
+	 */
+	protected int $progress_tick_id = 0;
+
+	/**
+	 * The slice of IDs in the database within which to look for matching posts.
+	 * By keeping this number higher than the posts_per_page, but smaller than
+	 * the total number of results in very large databases, it enables the right
+	 * balance of performant lookups with moving through the database quickly when
+	 * there are no matches in a particular slice of results.
+	 */
+	const STEPPING = 10000;
 
 	/**
 	 * Constructor. Accepts a unique key, which is used to keep track of the
@@ -124,11 +119,8 @@ class Bulk_Task {
 
 		// Maybe output progress.
 		if ( isset( $this->progress ) ) {
-			$current_page = floor( $this->min_id / $this->page_size );
-			while ( $this->page_current < $current_page ) {
-				$this->page_current ++;
-				$this->progress->tick();
-			}
+			$this->progress->tick( $this->min_id - $this->progress_tick_id );
+			$this->progress_tick_id = $this->min_id;
 		}
 	}
 
@@ -151,12 +143,10 @@ class Bulk_Task {
 		wp_defer_term_counting( true );
 
 		// Try to set up a progress bar. This will only work if output is not piped.
-		$this->page_max     = ceil( $this->max_id / $this->page_size );
-		$this->page_current = 0;
-		$progress           = make_progress_bar(
+		$progress = make_progress_bar(
 			// translators: Unique key for task.
 			sprintf( __( 'Processing posts for task %s', 'alleyinteractive-wp-bulk-task' ), $this->key ),
-			$this->page_max
+			$this->max_id
 		);
 		if ( $progress instanceof Bar ) {
 			$this->progress = $progress;
@@ -183,7 +173,7 @@ class Bulk_Task {
 				$wpdb->posts,
 				$this->min_id,
 				$wpdb->posts,
-				$this->max_id,
+				$this->min_id + self::STEPPING,
 				$where
 			);
 		}
@@ -233,9 +223,6 @@ class Bulk_Task {
 		$args['orderby']             = 'ID';
 		$args['suppress_filters']    = false;
 
-		// Set the page size to 10x posts_per_page.
-		$this->page_size = $args['posts_per_page'] * 10;
-
 		// Set the min ID from the cursor.
 		$this->min_id = $this->cursor->get();
 
@@ -268,7 +255,7 @@ class Bulk_Task {
 				$this->min_id = max( $query->posts );
 			} else {
 				// No results found in the block of posts, so skip ahead.
-				$this->min_id += $this->page_size;
+				$this->min_id += self::STEPPING;
 			}
 
 			// Actions to run after each batch of results.
