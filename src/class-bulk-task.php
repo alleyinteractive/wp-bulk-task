@@ -93,6 +93,9 @@ class Bulk_Task {
 	 * @link https://github.com/Automattic/vip-go-mu-plugins/blob/develop/vip-helpers/vip-wp-cli.php
 	 */
 	protected function after_batch(): void {
+		// Update cursor with the new min ID.
+		$this->cursor->set( $this->min_id );
+
 		// Reset query cache.
 		if ( function_exists( 'vip_reset_db_query_log' ) ) {
 			vip_reset_db_query_log();
@@ -267,9 +270,6 @@ class Bulk_Task {
 				// No results found in the block of posts, so skip ahead.
 				$this->min_id += $this->page_size;
 			}
-
-			// Update cursor with the new min ID.
-			$this->cursor->set( $this->min_id );
 
 			// Actions to run after each batch of results.
 			$this->after_batch();
