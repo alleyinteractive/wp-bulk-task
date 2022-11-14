@@ -142,28 +142,30 @@ composer update alleyinteractive/wp-cli-bulk-task --prefer-source
 
 ### Changelog
 
-This section should link to a `CHANGELOG.md` indicating the major version progress and changes.
+This project keeps a [changelog](CHANGELOG.md).
+
 
 ## Development Process
 
-Here, supply an overview of the development cycles, processes, or patterns this project subscribes to. If this is an Alley-only project for now, or if pull requests are welcome, generalize that here and leave the specifics to the contributing section below.
+See instructions above on installing from source. Pull requests are welcome from
+the community and will be considered for inclusion. Releases follow semantic
+versioning and are shipped on an as-needed basis.
+
 
 ### Contributing
 
-If this project is open source, link to the `CONTRIBUTING.md` here and outline whether issues, pull requests, etc. are welcome and how to go about it, eg:
-
-> Feel free to dive in! [Open an issue](https://github.com/RichardLitt/standard-readme/issues/new) or submit PRs.
-> Standard Readme follows the [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) Code of Conduct.
+See [our contributor guidelines](CONTRIBUTING.md) for instructions on how to
+contribute to this open source project.
 
 
 ## Project Structure
 
-Here, provide an overview of the project structure and link to internal READMEs or wikis the team has setup that provide more detailed or nuanced project architecture.
+This is a Composer package that is published to
+[Packagist](https://packagist.org/).
 
-If the project is intricate, consider including graphics. If you assume structural conventions, state them here, eg:
-
-- We store code we don't want to deploy in `/no-deploy`
-- We manage all third-party plugins via composer dependencies
+Classes must be autoloadable using
+`alleyinteractive/composer-wordpress-autoloader` and live in the `src`
+directory, following standard WordPress naming conventions for classes.
 
 
 ## Third-Party Dependencies

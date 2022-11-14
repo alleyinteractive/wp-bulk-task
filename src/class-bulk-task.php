@@ -5,11 +5,9 @@
  * @package alleyinteractive/wp-cli-bulk-task
  */
 
-
 namespace Alley_Interactive\WP_CLI_Bulk_Task;
 
 use cli\progress\Bar;
-use WP_CLI;
 use WP_Query;
 use function WP_CLI\Utils\make_progress_bar;
 
