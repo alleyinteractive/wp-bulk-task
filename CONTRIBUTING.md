@@ -1,4 +1,4 @@
-# Contributing to Elasticsearch Extensions
+# Contributing to WP Bulk Task
 
 Thank you for your interest in contributing to WP Bulk Task.
 

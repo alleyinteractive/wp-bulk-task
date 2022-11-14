@@ -14,21 +14,21 @@ namespace Alley_Interactive\WP_Bulk_Task\Progress;
  */
 interface Progress {
 	/**
-	 * Indicate that progress has reached 100%.
+	 * Sets the current value of the progress tracker.
+	 *
+	 * @param int $current The new current value for the progress tracker.
 	 */
-	public function finish();
+	public function set_current( int $current ): void;
 
 	/**
-	 * Define the finish line for the progress tracker.
-	 *
-	 * @param int $total The total to set.
+	 * Tells the progress tracker that it is finished.
 	 */
-	public function set_total( $total );
+	public function set_finished(): void;
 
 	/**
-	 * Trigger the progress tracker to update. Optionally pass an amount to increment.
+	 * Sets the maximum value of things being counted in the progress tracker.
 	 *
-	 * @param int $increment The amount that the tracker should update by.
+	 * @param int $total The total that is being counted up to.
 	 */
-	public function tick( $increment );
+	public function set_total( int $total ): void;
 }

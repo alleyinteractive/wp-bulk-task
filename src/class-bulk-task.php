@@ -46,13 +46,6 @@ class Bulk_Task {
 	protected string $object_hash;
 
 	/**
-	 * Store the last output progress tick ID for updating the progress bar.
-	 *
-	 * @var int
-	 */
-	protected int $progress_tick_id = 0;
-
-	/**
 	 * The slice of IDs in the database within which to look for matching posts.
 	 * By keeping this number higher than the posts_per_page, but smaller than
 	 * the total number of results in very large databases, it enables the right
@@ -111,8 +104,7 @@ class Bulk_Task {
 		}
 
 		// Update progress.
-		$this->progress?->tick( $this->min_id - $this->progress_tick_id );
-		$this->progress_tick_id = $this->min_id;
+		$this->progress?->set_current( $this->min_id );
 	}
 
 	/**
@@ -120,7 +112,7 @@ class Bulk_Task {
 	 */
 	protected function after_run(): void {
 		wp_defer_term_counting( false );
-		$this->progress?->finish();
+		$this->progress?->set_finished();
 	}
 
 	/**
