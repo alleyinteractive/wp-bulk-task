@@ -20,6 +20,13 @@ use function WP_CLI\Utils\make_progress_bar;
 class Bulk_Task {
 
 	/**
+	 * The cursor associated with this bulk task.
+	 *
+	 * @var Cursor
+	 */
+	public Cursor $cursor;
+
+	/**
 	 * Store the max post ID from the posts table so we know when we are done.
 	 *
 	 * @var int
@@ -74,7 +81,9 @@ class Bulk_Task {
 	 *
 	 * @param string $key A unique key for this bulk task, used to manage the cursor.
 	 */
-	public function __construct( public string $key ) {}
+	public function __construct( public string $key ) {
+		$this->cursor = new Cursor( $key );
+	}
 
 	/**
 	 * Actions to be taken after a batch is processed. Calls the WordPress VIP
@@ -139,7 +148,8 @@ class Bulk_Task {
 		$this->page_max     = ceil( $this->max_id / $this->page_size );
 		$this->page_current = 0;
 		$progress           = make_progress_bar(
-			sprintf( _x( 'Processing posts for task %s', 'Unique key for task', 'alleyinteractive-wp-cli-bulk-task' ), $this->key ),
+			// translators: Unique key for task.
+			sprintf( __( 'Processing posts for task %s', 'alleyinteractive-wp-cli-bulk-task' ), $this->key ),
 			$this->page_max
 		);
 		if ( $progress instanceof Bar ) {
@@ -160,8 +170,19 @@ class Bulk_Task {
 	 */
 	public function filter__posts_where( $where, $query ) {
 		if ( spl_object_hash( $query ) === $this->bulk_task_object_hash ) {
-			// TODO: Put this at the beginning of the WHERE clause and add the max ID.
-			return "AND {$GLOBALS['wpdb']->posts}.ID > {$this->bulk_task_min_id} {$where}";
+			global $wpdb;
+
+			return str_replace(
+				'1=1',
+				sprintf(
+					'%s.ID > %d AND %s.ID <= %d',
+					$wpdb->posts,
+					$this->min_id,
+					$wpdb->posts,
+					$this->max_id
+				),
+				$where
+			);
 		}
 
 		return $where;
@@ -213,8 +234,7 @@ class Bulk_Task {
 		$this->page_size = $args['posts_per_page'] * 10;
 
 		// Ensure $bulk_task_min_id always starts at 0.
-		// TODO: Replace this with the value from the option via the cursor.
-		$this->min_id = 0;
+		$this->min_id = $this->cursor->get();
 
 		// Set the max ID from the database.
 		$this->max_id = $wpdb->get_var( 'SELECT MAX(ID) FROM ' . $wpdb->posts ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -248,7 +268,8 @@ class Bulk_Task {
 				$this->min_id += $this->page_size;
 			}
 
-			// TODO: UPDATE CURSOR.
+			// Update cursor with the new min ID.
+			$this->cursor->set( $this->min_id );
 
 			// Actions to run after each batch of results.
 			$this->after_batch();
