@@ -1,16 +1,16 @@
-# WP-CLI Bulk Task
+# WP Bulk Task
 
 [![Readme Standard Spec Badge](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
-A library to assist with running performant bulk tasks against posts via WP-CLI.
+A library to assist with running performant bulk tasks against WordPress posts.
 
 ## Background
 
 This package provides a library to make it easier to run bulk tasks against a
-WordPress database using WP-CLI in a performant way. It includes functionality
-to search through a WordPress database for posts using WP_Query-style arguments
-and keeps a cursor of its location within the database in case it is interrupted
-and needs to start again.
+WordPress database in a performant way. It includes functionality to search
+through a WordPress database for posts using WP_Query-style arguments and keeps
+a cursor of its location within the database in case it is interrupted and needs
+to start again.
 
 
 ## Releases
@@ -21,7 +21,7 @@ semantic versioning conventions.
 
 ### Install
 
-Requires Composer and PHP >= 8.0. Must be used in a WP-CLI command context.
+Requires Composer and PHP >= 8.0.
 
 
 ### Use
@@ -29,7 +29,7 @@ Requires Composer and PHP >= 8.0. Must be used in a WP-CLI command context.
 Install this package via Composer:
 
 ```sh
-composer require alleyinteractive/wp-cli-bulk-task
+composer require alleyinteractive/wp-bulk-task
 ```
 
 Ensure that the Composer autoloader is loaded into your project:
@@ -61,7 +61,7 @@ class My_Custom_CLI_Command extends WP_CLI_Command {
 	 * @subcommand bananaify
 	 */
 	public function bananaify( $args, $assoc_args ) {
-		$bulk_task = new \Alley_Interactive\WP_CLI_Bulk_Task\Bulk_Task( 'bananaify' );
+		$bulk_task = new \Alley_Interactive\WP_Bulk_Task\Bulk_Task( 'bananaify' );
 
 		// Handle rewind requests.
 		if ( ! empty( $assoc_args['rewind'] ) ) {
@@ -113,7 +113,7 @@ To work on this project locally, first add the repository to your project's
 	"repositories": [
 		{
 			"type": "path",
-			"url": "../path/to/wp-cli-bulk-task",
+			"url": "../path/to/wp-bulk-task",
 			"options": {
 				"symlink": true
 			}
@@ -128,7 +128,7 @@ Next, add the local development files to the `require` section of
 ```json
 {
 	"require": {
-		"alleyinteractive/wp-cli-bulk-task": "@dev"
+		"alleyinteractive/wp-bulk-task": "@dev"
 	}
 }
 ```
@@ -136,7 +136,7 @@ Next, add the local development files to the `require` section of
 Finally, update composer to use the local copy of the package:
 
 ```sh
-composer update alleyinteractive/wp-cli-bulk-task --prefer-source
+composer update alleyinteractive/wp-bulk-task --prefer-source
 ```
 
 

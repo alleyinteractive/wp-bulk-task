@@ -1,6 +1,6 @@
 # Contributing to Elasticsearch Extensions
 
-Thank you for your interest in contributing to WP-CLI Bulk Task.
+Thank you for your interest in contributing to WP Bulk Task.
 
 Read our
 [Code of Conduct](https://github.com/alleyinteractive/.github/blob/main/CODE_OF_CONDUCT.md)
@@ -29,15 +29,15 @@ Here are some resources to help you get started with open source contributions:
 #### Create a New Issue
 
 If you see a problem or an opportunity to create a new feature,
-[search if an issue already exists](https://github.com/alleyinteractive/wp-cli-bulk-task/issues).
+[search if an issue already exists](https://github.com/alleyinteractive/wp-bulk-task/issues).
 
 If a related issue doesn't exist, you can
-[open a new issue](https://github.com/alleyinteractive/wp-cli-bulk-task/issues/new).
+[open a new issue](https://github.com/alleyinteractive/wp-bulk-task/issues/new).
 
 #### Solve an Issue
 
 If you would like to help solve an existing issue navigate to the
-[list of open issues](https://github.com/alleyinteractive/wp-cli-bulk-task/issues)
+[list of open issues](https://github.com/alleyinteractive/wp-bulk-task/issues)
 and choose one that interests you.
 
 ### Making Changes

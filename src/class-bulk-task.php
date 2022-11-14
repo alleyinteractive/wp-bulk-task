@@ -1,11 +1,11 @@
 <?php
 /**
- * Alley_Interactive\WP_CLI_Bulk_Task: Bulk_Task class
+ * Alley_Interactive\WP_Bulk_Task: Bulk_Task class
  *
- * @package alleyinteractive/wp-cli-bulk-task
+ * @package alleyinteractive/wp-bulk-task
  */
 
-namespace Alley_Interactive\WP_CLI_Bulk_Task;
+namespace Alley_Interactive\WP_Bulk_Task;
 
 use cli\progress\Bar;
 use WP_Query;
@@ -14,7 +14,7 @@ use function WP_CLI\Utils\make_progress_bar;
 /**
  * A class that provides performant bulk task functionality.
  *
- * @package alleyinteractive/wp-cli-bulk-task
+ * @package alleyinteractive/wp-bulk-task
  */
 class Bulk_Task {
 
@@ -152,7 +152,7 @@ class Bulk_Task {
 		$this->page_current = 0;
 		$progress           = make_progress_bar(
 			// translators: Unique key for task.
-			sprintf( __( 'Processing posts for task %s', 'alleyinteractive-wp-cli-bulk-task' ), $this->key ),
+			sprintf( __( 'Processing posts for task %s', 'alleyinteractive-wp-bulk-task' ), $this->key ),
 			$this->page_max
 		);
 		if ( $progress instanceof Bar ) {
