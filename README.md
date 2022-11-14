@@ -175,35 +175,30 @@ directory, following standard WordPress naming conventions for classes.
 
 ## Third-Party Dependencies
 
-Here, provide and link third-party dependencies outside those covered by a simple [install](#install) above. These might include links to a third-party SSO provider, a required license, or specific packages or libraries. For every dependency, include an overview of the purpose and instructions to manage or learn more about the integration. This is fine to summarize or link internally (eg. to a GitHub [wiki](https://docs.github.com/en/communities/documenting-your-project-with-wikis/about-wikis)), but be certain to include whether these are optional or required.
+Dependencies are managed by Composer, and include:
+
+- `alleyinteractive/composer-wordpress-autoloader`: Used for autoloading classes
+  that follow the standard WordPress conventions for filenames.
+- `alleyinteractive/alley-coding-standards`: Used for running phpcs linting.
 
 
 ## Related Efforts
 
-If your project requires, depends, extends, or competes with alternate projects worth noting, link them here, eg:
-
-- Built with 💌  via the [mantle](https://mantle.alley.com/) framework
+- [WP_CLI](https://github.com/wp-cli/wp-cli)
 
 
 ## Maintainers
 
-For open source projects (public repositories), include GitHub handles of individuals or teams, or include a generic link to the [Alley Interactive](https://github.com/alleyinteractive) organization with a hashtag `#campteam`, eg:
-
-- [Alley Interactive](https://github.com/alleyinteractive) #mops
-
-It is also acceptable to break out responsibilities to individual GitHub handles or organizations if appropriate, eg:
-
-- Deployment [@benpbolton](https://github.com/benpbolton)
-
-Unless otherwise directed, include an Alley branded logo block for internal and external marketing.
+- [Alley](https://github.com/alleyinteractive)
 
 ![Alley logo](https://avatars.githubusercontent.com/u/1733454?s=200&v=4)
 
 ### Contributors
 
-This optional section thanks all the people who contribute, perhaps by linking to the GitHub contributors page, perhaps by direct mention.
+Thanks to all of the [contributors](CONTRIBUTORS.md) to this project.
 
 
 ## License
 
-If licensed or copyrighted, indicate that here with a link to the license or copyright.
+This project is licensed under the
+[GNU Public License (GPL) version 2](LICENSE) or later.

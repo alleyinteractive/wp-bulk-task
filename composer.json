@@ -26,8 +26,7 @@
   "name": "alleyinteractive/wp-bulk-task",
   "require": {
     "php": ">=8.0",
-    "alleyinteractive/composer-wordpress-autoloader": "^1.0",
-    "illuminate/database": "^9.39"
+    "alleyinteractive/composer-wordpress-autoloader": "^1.0"
   },
   "require-dev": {
     "alleyinteractive/alley-coding-standards": "^0.3"
