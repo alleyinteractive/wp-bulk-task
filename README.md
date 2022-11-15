@@ -89,8 +89,7 @@ class My_Custom_CLI_Command extends WP_CLI_Command {
 					],
 				],
 			],
-			function( $post_id ) use ( $dry_run ) {
-				$post = get_post( $post_id );
+			function( $post ) use ( $dry_run ) {
 				if ( false !== strpos( $post->post_content, 'apple' ) ) {
 					$new_value = str_replace( 'apple', 'banana', $post->post_content );
 					if ( $dry_run ) {
