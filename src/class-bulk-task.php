@@ -159,8 +159,8 @@ class Bulk_Task {
 	 *     WP_Query args. Some have overridden defaults, and some are fixed.
 	 *     Anything not mentioned below will operate as normal.
 	 *
-	 *     @type string $fields              Always 'ids'.
 	 *     @type bool   $ignore_sticky_posts Always true.
+	 *     @type bool   $no_found_rows       Always true.
 	 *     @type string $order               Always 'ASC'.
 	 *     @type string $orderby             Always 'ID'.
 	 *     @type int    $paged               Always 1.
@@ -170,7 +170,7 @@ class Bulk_Task {
 	 *     @type bool   $suppress_filters    Always false.
 	 * }
 	 * @param callable $callable Callback function to invoke for each post.
-	 *                           The callable will be passed a post ID.
+	 *                           The callable will be passed a post object.
 	 */
 	public function run( array $args, callable $callable ): void {
 		global $wpdb;
@@ -186,11 +186,11 @@ class Bulk_Task {
 		);
 
 		// Force some arguments and don't let them get overridden.
-		$args['fields']              = 'ids';
 		$args['ignore_sticky_posts'] = true;
-		$args['paged']               = 1;
+		$args['no_found_rows']       = true;
 		$args['order']               = 'ASC';
 		$args['orderby']             = 'ID';
+		$args['paged']               = 1;
 		$args['suppress_filters']    = false;
 
 		// Set the min ID from the cursor.
@@ -222,7 +222,7 @@ class Bulk_Task {
 				array_walk( $query->posts, $callable );
 
 				// Update our min ID for the next query.
-				$this->min_id = max( $query->posts );
+				$this->min_id = max( wp_list_pluck( $query->posts, 'ID' ) );
 			} else {
 				// No results found in the block of posts, so skip ahead.
 				$this->min_id += self::STEPPING;
