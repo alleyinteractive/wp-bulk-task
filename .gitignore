@@ -5,6 +5,7 @@
 
 # Cache files
 .phpcs-cache.json
+.phpunit.result.cache
 
 # Composer
 composer.lock
