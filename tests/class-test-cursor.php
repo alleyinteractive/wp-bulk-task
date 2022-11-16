@@ -1,11 +1,11 @@
 <?php
 /**
- * Alley_Interactive\WP_Bulk_Task Tests: Test_Cursor class
+ * Alley\WP_Bulk_Task Tests: Test_Cursor class
  *
  * @package alleyinteractive/wp-bulk-task
  */
 
-use Alley_Interactive\WP_Bulk_Task\Cursor;
+use Alley\WP_Bulk_Task\Cursor;
 use Mantle\Testkit\Test_Case;
 
 /**

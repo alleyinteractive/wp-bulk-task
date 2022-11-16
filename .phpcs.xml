@@ -19,7 +19,7 @@
 	<!-- Set the prefixes for functions etc. -->
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<properties>
-			<property name="prefixes" type="array" value="alley_interactive,test" />
+			<property name="prefixes" type="array" value="alley,test" />
 		</properties>
 	</rule>
 

@@ -1,11 +1,11 @@
 <?php
 /**
- * Alley_Interactive\WP_Bulk_Task\Progress: PHP_CLI_Progress_Bar Class
+ * Alley\WP_Bulk_Task\Progress: PHP_CLI_Progress_Bar Class
  *
  * @package alleyinteractive/wp-bulk-task
  */
 
-namespace Alley_Interactive\WP_Bulk_Task\Progress;
+namespace Alley\WP_Bulk_Task\Progress;
 
 /**
  * A class that extends the cli\progress\Bar class used by WP_CLI and implements

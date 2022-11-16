@@ -18,7 +18,7 @@
   "extra": {
     "wordpress-autoloader": {
       "autoload": {
-        "Alley_Interactive\\WP_Bulk_Task\\": "src/"
+        "Alley\\WP_Bulk_Task\\": "src/"
       }
     }
   },

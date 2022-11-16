@@ -1,11 +1,11 @@
 <?php
 /**
- * Alley_Interactive\WP_Bulk_Task: Cursor class
+ * Alley\WP_Bulk_Task: Cursor class
  *
  * @package alleyinteractive/wp-bulk-task
  */
 
-namespace Alley_Interactive\WP_Bulk_Task;
+namespace Alley\WP_Bulk_Task;
 
 /**
  * A class that handles getting, updating, and resetting a cursor for a task.

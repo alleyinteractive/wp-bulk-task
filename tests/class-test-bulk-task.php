@@ -1,11 +1,11 @@
 <?php
 /**
- * Alley_Interactive\WP_Bulk_Task Tests: Test_Bulk_Task class
+ * Alley\WP_Bulk_Task Tests: Test_Bulk_Task class
  *
  * @package alleyinteractive/wp-bulk-task
  */
 
-use Alley_Interactive\WP_Bulk_Task\Bulk_Task;
+use Alley\WP_Bulk_Task\Bulk_Task;
 use Mantle\Testkit\Test_Case;
 
 /**
@@ -22,13 +22,13 @@ class Test_Bulk_Task extends Test_Case {
 			[
 				'post_content' => 'apple',
 				'post_type'    => 'post',
-			] 
+			]
 		);
 		$post_id_2 = self::factory()->post->create(
 			[
 				'post_content' => 'apple',
 				'post_type'    => 'page',
-			] 
+			]
 		);
 		( new Bulk_Task( 'test_filtered_run' ) )->run(
 			[

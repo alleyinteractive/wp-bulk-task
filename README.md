@@ -61,9 +61,9 @@ class My_Custom_CLI_Command extends WP_CLI_Command {
 	 * @subcommand bananaify
 	 */
 	public function bananaify( $args, $assoc_args ) {
-		$bulk_task = new \Alley_Interactive\WP_Bulk_Task\Bulk_Task(
+		$bulk_task = new \Alley\WP_Bulk_Task\Bulk_Task(
 			'bananaify',
-			new \Alley_Interactive\WP_Bulk_Task\Progress\PHP_CLI_Progress_Bar(
+			new \Alley\WP_Bulk_Task\Progress\PHP_CLI_Progress_Bar(
 				__( 'Bulk Task: remove_broken_links', 'my-textdomain' )
 			)
 		);
@@ -105,6 +105,9 @@ class My_Custom_CLI_Command extends WP_CLI_Command {
 	}
 }
 ```
+
+For more information on usage,
+[visit the wiki](https://github.com/alleyinteractive/wp-bulk-task/wiki).
 
 
 ### From Source

@@ -1,11 +1,11 @@
 <?php
 /**
- * Alley_Interactive\WP_Bulk_Task\Progress: Progress Interface
+ * Alley\WP_Bulk_Task\Progress: Progress Interface
  *
  * @package alleyinteractive/wp-bulk-task
  */
 
-namespace Alley_Interactive\WP_Bulk_Task\Progress;
+namespace Alley\WP_Bulk_Task\Progress;
 
 /**
  * An interface that describes required properties for reporting progress.

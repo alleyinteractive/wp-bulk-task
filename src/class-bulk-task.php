@@ -1,13 +1,13 @@
 <?php
 /**
- * Alley_Interactive\WP_Bulk_Task: Bulk_Task class
+ * Alley\WP_Bulk_Task: Bulk_Task class
  *
  * @package alleyinteractive/wp-bulk-task
  */
 
-namespace Alley_Interactive\WP_Bulk_Task;
+namespace Alley\WP_Bulk_Task;
 
-use Alley_Interactive\WP_Bulk_Task\Progress\Progress;
+use Alley\WP_Bulk_Task\Progress\Progress;
 use WP_Query;
 
 /**
