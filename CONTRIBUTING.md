@@ -94,7 +94,7 @@ PR.
 Congratulations! The Alley team thanks you.
 
 Once your PR is merged, your contributions will be publicly available on the
-`main` branch of the plugin and included in a future tagged version and you will
+`main` branch of the library and included in a future tagged version and you will
 be added to the contributors list.
 
 ## References

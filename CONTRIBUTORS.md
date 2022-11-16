@@ -1,6 +1,6 @@
 # Contributors
 
-A heartfelt thank you to everyone who made this plugin possible:
+A heartfelt thank you to everyone who made this library possible:
 
 - Matthew Boynes ([@mboynes](https://github.com/mboynes))
 - Sean Fisher ([@srtfisher](https://github.com/srtfisher))
