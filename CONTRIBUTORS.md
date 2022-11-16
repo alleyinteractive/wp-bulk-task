@@ -3,6 +3,7 @@
 A heartfelt thank you to everyone who made this plugin possible:
 
 - Matthew Boynes ([@mboynes](https://github.com/mboynes))
+- Sean Fisher ([@srtfisher](https://github.com/srtfisher))
 - Kevin Fodness ([@kevinfodness](https://github.com/kevinfodness))
 - Joe McGill ([@joemcgill](https://github.com/joemcgill))
 
