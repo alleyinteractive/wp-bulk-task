@@ -42,6 +42,5 @@
       "@lint",
       "@phpunit"
     ]
-  },
-  "type": "project"
+  }
 }
