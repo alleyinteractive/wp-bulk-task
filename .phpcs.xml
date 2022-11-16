@@ -49,5 +49,5 @@
 	<config name="testVersion" value="8.0-"/>
 
 	<!-- Ignore compatibility problems with WordPress versions below this value. -->
-	<config name="minimum_supported_wp_version" value="6.1"/>
+	<config name="minimum_supported_wp_version" value="6.0"/>
 </ruleset>

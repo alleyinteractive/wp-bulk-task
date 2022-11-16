@@ -18,12 +18,11 @@ class Test_Cursor extends Test_Case {
 	 * Tests the cursor lifecycle (does not exist, created, updated, removed).
 	 */
 	public function test_lifecycle(): void {
-		$this->assertFalse( get_option( 'bt_test-cursor' ) );
 		$cursor = new Cursor( 'test-cursor' );
+		$this->assertEquals( 0, $cursor->get() );
 		$cursor->set( 1234 );
 		$this->assertEquals( 1234, $cursor->get() );
-		$this->assertEquals( 1234, (int) get_option( 'bt_test-cursor' ) );
 		$cursor->reset();
-		$this->assertFalse( get_option( 'bt_test-cursor' ) );
+		$this->assertEquals( 0, $cursor->get() );
 	}
 }

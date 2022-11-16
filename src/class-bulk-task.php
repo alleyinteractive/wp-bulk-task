@@ -51,8 +51,14 @@ class Bulk_Task {
 	 * the total number of results in very large databases, it enables the right
 	 * balance of performant lookups with moving through the database quickly when
 	 * there are no matches in a particular slice of results.
+	 *
+	 * This property is public and can be overridden, and the logic for
+	 * determining the max ID in the range will take the larger of this property
+	 * and posts_per_page.
+	 *
+	 * @var int
 	 */
-	const STEPPING = 10000;
+	public int $stepping = 10000;
 
 	/**
 	 * Constructor. Accepts a unique key, which is used to keep track of the
@@ -143,7 +149,7 @@ class Bulk_Task {
 				$wpdb->posts,
 				$this->min_id,
 				$wpdb->posts,
-				$this->min_id + self::STEPPING,
+				$this->min_id + $this->stepping,
 				$where
 			);
 		}
@@ -193,6 +199,9 @@ class Bulk_Task {
 		$args['paged']               = 1;
 		$args['suppress_filters']    = false;
 
+		// Ensure stepping is the larger of the configured value and posts_per_page.
+		$this->stepping = max( $this->stepping, $args['posts_per_page'] );
+
 		// Set the min ID from the cursor.
 		$this->min_id = $this->cursor->get();
 
@@ -222,10 +231,10 @@ class Bulk_Task {
 				array_walk( $query->posts, $callable );
 
 				// Update our min ID for the next query.
-				$this->min_id = max( wp_list_pluck( $query->posts, 'ID' ) );
+				$this->min_id = end( $query->posts )->ID;
 			} else {
 				// No results found in the block of posts, so skip ahead.
-				$this->min_id += self::STEPPING;
+				$this->min_id += $this->stepping;
 			}
 
 			// Actions to run after each batch of results.

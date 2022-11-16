@@ -41,17 +41,22 @@ class Cursor {
 
 	/**
 	 * Resets the value for the cursor.
+	 *
+	 * @return bool True if the value was deleted, false otherwise.
+	 *              Will also return false if the cursor did not have a value saved to the database.
 	 */
-	public function reset(): void {
-		delete_option( $this->option_name );
+	public function reset(): bool {
+		return delete_option( $this->option_name );
 	}
 
 	/**
 	 * Sets the value for the cursor.
 	 *
 	 * @param int $value The new value for the cursor.
+	 *
+	 * @return bool True if the value was successfully set, false otherwise.
 	 */
-	public function set( int $value ): void {
-		update_option( $this->option_name, $value );
+	public function set( int $value ): bool {
+		return update_option( $this->option_name, $value );
 	}
 }
