@@ -1,0 +1,47 @@
+{
+  "authors": [
+    {
+      "name": "Alley",
+      "email": "info@alley.com"
+    }
+  ],
+  "config": {
+    "allow-plugins": {
+      "alleyinteractive/composer-wordpress-autoloader": true,
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    },
+    "apcu-autoloader": true,
+    "optimize-autoloader": true,
+    "sort-packages": true
+  },
+  "description": "A library to assist with running performant bulk tasks against WordPress posts.",
+  "extra": {
+    "wordpress-autoloader": {
+      "autoload": {
+        "Alley\\WP_Bulk_Task\\": "src/"
+      }
+    }
+  },
+  "license": "GPL-2.0-or-later",
+  "name": "alleyinteractive/wp-bulk-task",
+  "require": {
+    "php": ">=8.0",
+    "alleyinteractive/composer-wordpress-autoloader": "^1.0"
+  },
+  "require-dev": {
+    "alleyinteractive/alley-coding-standards": "^0.3",
+    "mantle-framework/testkit": "^0.8.0"
+  },
+  "scripts": {
+    "lint": "@phpcs",
+    "lint:fix": "@phpcbf",
+    "phpcbf": "phpcbf .",
+    "phpcs": "phpcs .",
+    "phpunit": "WP_CORE_DIR=/tmp/wordpress phpunit",
+    "test": [
+      "@lint",
+      "@phpunit"
+    ]
+  },
+  "type": "project"
+}

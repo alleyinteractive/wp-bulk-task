@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<ruleset
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	name="alleyinteractive/wp-bulk-task"
+	xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/squizlabs/PHP_CodeSniffer/master/phpcs.xsd"
+>
+	<description>PHP_CodeSniffer standard for alleyinteractive/wp-bulk-task.</description>
+
+	<!-- Include Alley rules. -->
+	<rule ref="Alley-Interactive"/>
+
+	<!-- Set the text domain for i18n. -->
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array" value="alleyinteractive-wp-bulk-task" />
+		</properties>
+	</rule>
+
+	<!-- Set the prefixes for functions etc. -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array" value="alley,test" />
+		</properties>
+	</rule>
+
+	<!--
+	Pass some flags to PHPCS:
+		p flag: Show progress of the run.
+		s flag: Show sniff codes in all reports.
+	-->
+	<arg value="ps"/>
+
+	<!-- Whenever possible, cache the scan results and re-use those for unchanged files on the next scan. -->
+	<arg name="cache" value=".phpcs-cache.json"/>
+
+	<!-- Strip the filepaths down to the relevant bit. -->
+	<arg name="basepath" value="./"/>
+
+	<!-- Check up to 20 files simultaneously. -->
+	<arg name="parallel" value="20"/>
+
+	<!-- Set severity to 1 to see everything that isn't effectively turned off. -->
+	<arg name="severity" value="1"/>
+
+	<!-- Exclude the composer vendor folder. -->
+	<exclude-pattern>vendor/</exclude-pattern>
+
+	<!-- Check for cross-version support for PHP 8.0 and higher. -->
+	<config name="testVersion" value="8.0-"/>
+
+	<!-- Ignore compatibility problems with WordPress versions below this value. -->
+	<config name="minimum_supported_wp_version" value="6.0"/>
+</ruleset>

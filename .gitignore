@@ -1,0 +1,21 @@
+# IDEs
+*.code-workspace
+.idea
+.vscode
+
+# Cache files
+.phpcs-cache.json
+.phpunit.result.cache
+
+# Composer
+composer.lock
+vendor
+
+# Ignore temporary OS files
+.DS_Store
+.DS_Store?
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.thumbsdb

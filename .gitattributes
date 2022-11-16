@@ -1,0 +1,22 @@
+#
+# Exclude these files from release archives.
+# This will also make them unavailable when using Composer with `--prefer-dist`.
+# If you develop for WPCS using Composer, use `--prefer-source`.
+# https://blog.madewithlove.be/post/gitattributes/
+#
+.editorconfig export-ignore
+.gitattributes export-ignore
+.github export-ignore
+.gitignore export-ignore
+.phpcs.xml export-ignore
+CHANGELOG.md export-ignore
+CONTRIBUTING.md export-ignore
+CONTRIBUTORS.md export-ignore
+phpunit.xml export-ignore
+README.md export-ignore
+tests export-ignore
+
+#
+# Auto detect text files and perform LF normalization
+#
+* text=auto
