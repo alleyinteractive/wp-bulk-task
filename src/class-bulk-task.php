@@ -243,5 +243,8 @@ class Bulk_Task {
 
 		// Re-enable automatic behavior turned off earlier.
 		$this->after_run();
+
+		// Remove filter after task run. Prevents double filtering the query if you're instantiating the class multiple times.
+		remove_filter( 'posts_where', [ $this, 'filter__posts_where' ], 9999 );
 	}
 }
