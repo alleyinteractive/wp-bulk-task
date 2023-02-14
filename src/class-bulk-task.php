@@ -42,9 +42,9 @@ class Bulk_Task {
 	/**
 	 * Store the current query object for bulk tasks.
 	 *
-	 * @var mixed
+	 * @var object
 	 */
-	protected string $query;
+	protected object $query;
 
 	/**
 	 * Store the current query object hash for bulk tasks.
