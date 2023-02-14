@@ -167,7 +167,9 @@ class Bulk_Task {
 	}
 
 	/**
-	 * Manipulate the WHERE clause of a bulk task term query to batch by term_id.
+	 * Manipulate the WHERE clause of a bulk task term query to batch by
+	 * term_taxonomy_id. We're using term_taxonomy_id rather than term_id because
+	 * they're less likely to span very large ranges.
 	 *
 	 * This checks the object hash to ensure that we don't manipulate any other
 	 * queries that might run during a bulk task.
@@ -180,7 +182,7 @@ class Bulk_Task {
 	public function filter__terms_where( $clauses ) {
 		if ( ! empty( $this->query ) && spl_object_hash( $this->query ) === $this->object_hash ) {
 			$clauses['where'] .= sprintf(
-				' AND t.term_id > %d AND t.term_id <= %d',
+				' AND tt.term_taxonomy_id > %d AND tt.term_taxonomy_id <= %d',
 				$this->min_id,
 				$this->min_id + $this->stepping
 			);
@@ -217,7 +219,7 @@ class Bulk_Task {
 	 *
 	 *     @type string $order                  Always 'ASC'.
 	 *     @type string $orderby                Always 'term_id'.
-	 *     @type int    $number                 Defaults to 100.
+	 *     @type int    $number                 Defaults to 0 (all).
 	 *     @type bool   $update_term_meta_cache Always false.
 	 * }
 	 * @param callable $callable Callback function to invoke for each post.
@@ -230,7 +232,7 @@ class Bulk_Task {
 		$args = wp_parse_args(
 			$args,
 			[
-				'number' => 100,
+				'number' => 0,
 			],
 		);
 
@@ -246,7 +248,7 @@ class Bulk_Task {
 		$this->min_id = $this->cursor->get();
 
 		// Set the max ID from the database.
-		$this->max_id = $wpdb->get_var( 'SELECT MAX(term_id) FROM ' . $wpdb->terms ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$this->max_id = $wpdb->get_var( 'SELECT MAX(term_taxonomy_id) FROM ' . $wpdb->term_taxonomy ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		// Handle batching.
 		add_filter( 'terms_clauses', [ $this, 'filter__terms_where' ], 9999 );
@@ -271,7 +273,7 @@ class Bulk_Task {
 				array_walk( $this->query->terms, $callable );
 
 				// Update our min ID for the next query.
-				$this->min_id = end( $this->query->terms )->term_id;
+				$this->min_id = end( $this->query->terms )->term_taxonomy_id;
 			} else {
 				// No results found in the block of terms, so skip ahead.
 				$this->min_id += $this->stepping;
