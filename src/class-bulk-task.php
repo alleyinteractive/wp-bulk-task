@@ -8,6 +8,7 @@
 namespace Alley\WP_Bulk_Task;
 
 use Alley\WP_Bulk_Task\Progress\Progress;
+use WP_Term_Query;
 use WP_Query;
 
 /**
@@ -39,7 +40,14 @@ class Bulk_Task {
 	protected int $min_id;
 
 	/**
-	 * Store the current WP_Query object hash for bulk tasks.
+	 * Store the current query object for bulk tasks.
+	 *
+	 * @var mixed
+	 */
+	protected string $query;
+
+	/**
+	 * Store the current query object hash for bulk tasks.
 	 *
 	 * @var string
 	 */
@@ -130,7 +138,7 @@ class Bulk_Task {
 	}
 
 	/**
-	 * Manipulate the WHERE clause of a bulk task query to paginate by ID.
+	 * Manipulate the WHERE clause of a bulk task post query to paginate by ID.
 	 *
 	 * This checks the object hash to ensure that we don't manipulate any other
 	 * queries that might run during a bulk task.
@@ -158,6 +166,135 @@ class Bulk_Task {
 	}
 
 	/**
+	 * Manipulate the WHERE clause of a bulk task term query to batch by ID.
+	 *
+	 * This checks the object hash to ensure that we don't manipulate any other
+	 * queries that might run during a bulk task.
+	 *
+	 * @link https://github.com/WordPress/wordpress-develop/blob/6.1/src/wp-includes/class-wp-term-query.php#L731
+	 *
+	 * @param array $clauses Associative array of the clauses for the query.
+	 * @return string Filtered array with our batching added to the WHERE clause.
+	 */
+	public function filter__terms_where( $clauses ) {
+		if ( ! empty( $this->query ) && spl_object_hash( $this->query ) === $this->object_hash ) {
+			global $wpdb;
+
+			$clauses['where'] .= sprintf(
+				' AND %s.term_id > %d AND %s.term_id <= %d %s',
+				$wpdb->terms,
+				$this->min_id,
+				$wpdb->terms,
+				$this->min_id + $this->stepping,
+				$where
+			);
+		}
+
+		return $clauses;
+	}
+
+	/**
+	 * Loop through any number of objects efficiently with a callback, and output
+	 * the progress.
+	 *
+	 * @param array    $args Array of args to pass to query.
+	 * @param callable $callable Callback function to invoke for each object.
+	 *                           The callable will be passed an object of the
+	 *                           specified type.
+	 * @param string   $object_type Type of object to query.
+	 */
+	public function run( array $args, callable $callable, string $object_type = 'wp_post' ): void {
+		if ( ! method_exists( $this, "run_${object_type}_query" ) ) {
+			return;
+		}
+
+		call_user_func( [ $this, "run_${object_type}_query" ], $args, $callable );
+	}
+
+	/**
+	 * Loop through any number of terms efficiently with a callback, and output
+	 * the progress.
+	 *
+	 * @param array    $args {
+	 *     WP_Term_Query args. Some have overridden defaults, and some are fixed.
+	 *     Anything not mentioned below will operate as normal.
+	 *
+	 *     @type bool   $count                  Always false.
+	 *     @type string $order                  Always 'ASC'.
+	 *     @type string $orderby                Always 'term_id'.
+	 *     @type int    $number                 Defaults to 100.
+	 *     @type bool   $update_term_meta_cache Always false.
+	 * }
+	 * @param callable $callable Callback function to invoke for each post.
+	 *                           The callable will be passed a post object.
+	 */
+	public function run_wp_term_query( array $args, callable $callable ): void {
+		global $wpdb;
+
+		// Apply default arguments.
+		$args = wp_parse_args(
+			$args,
+			[
+				'number' => 100,
+			],
+		);
+
+		// Force some arguments and don't let them get overridden.
+		$args['count']                  = false;
+		$args['order']                  = 'ASC';
+		$args['orderby']                = 'term_id';
+		$args['update_term_meta_cache'] = false;
+
+		// Ensure stepping is the larger of the configured value and number.
+		$this->stepping = max( $this->stepping, $args['number'] );
+
+		// Set the min ID from the cursor.
+		$this->min_id = $this->cursor->get();
+
+		// Set the max ID from the database.
+		$this->max_id = $wpdb->get_var( 'SELECT MAX(term_id) FROM ' . $wpdb->terms ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		// Handle batching.
+		add_filter( 'terms_clauses', [ $this, 'filter__terms_where' ], 9999, 1 );
+
+		// Turn off some automatic behavior that would slow down the process.
+		$this->before_run();
+
+		// All systems go.
+		while ( $this->min_id < $this->max_id ) {
+			// Build the query object, but don't run it without the object hash.
+			$this->query = new WP_Term_Query();
+
+			// Store the unique object hash to ensure we only filter this query.
+			$this->object_hash = spl_object_hash( $this->query );
+
+			// Run the query.
+			$this->query->query( $args );
+
+			// Fork for results vs. not.
+			if ( ! empty( $this->query->terms ) ) {
+				// Invoke the callable over every term.
+				array_walk( $this->query->terms, $callable );
+
+				// Update our min ID for the next query.
+				$this->min_id = end( $this->query->terms )->term_id;
+			} else {
+				// No results found in the block of terms, so skip ahead.
+				$this->min_id += $this->stepping;
+			}
+
+			// Actions to run after each batch of results.
+			$this->after_batch();
+		}
+
+		// Re-enable automatic behavior turned off earlier.
+		$this->after_run();
+
+		// Remove filter after task run. Prevents double filtering the query if you're instantiating the class multiple times.
+		remove_filter( 'terms_clauses', [ $this, 'filter__terms_where' ], 9999 );
+	}
+
+	/**
 	 * Loop through any number of posts efficiently with a callback, and output
 	 * the progress.
 	 *
@@ -178,7 +315,7 @@ class Bulk_Task {
 	 * @param callable $callable Callback function to invoke for each post.
 	 *                           The callable will be passed a post object.
 	 */
-	public function run( array $args, callable $callable ): void {
+	public function run_wp_post_query( array $args, callable $callable ): void {
 		global $wpdb;
 
 		// Apply default arguments.
