@@ -40,7 +40,8 @@ class Bulk_Task {
 	protected int $min_id;
 
 	/**
-	 * Store the current query object for bulk tasks.
+	 * Store the current query object for bulk tasks. Used when filtering the
+	 * WHERE clause and the query object is not provided in the filter.
 	 *
 	 * @var object
 	 */
@@ -166,7 +167,7 @@ class Bulk_Task {
 	}
 
 	/**
-	 * Manipulate the WHERE clause of a bulk task term query to batch by ID.
+	 * Manipulate the WHERE clause of a bulk task term query to batch by term_id.
 	 *
 	 * This checks the object hash to ensure that we don't manipulate any other
 	 * queries that might run during a bulk task.
@@ -178,15 +179,10 @@ class Bulk_Task {
 	 */
 	public function filter__terms_where( $clauses ) {
 		if ( ! empty( $this->query ) && spl_object_hash( $this->query ) === $this->object_hash ) {
-			global $wpdb;
-
 			$clauses['where'] .= sprintf(
-				' AND %s.term_id > %d AND %s.term_id <= %d %s',
-				$wpdb->terms,
+				' AND t.term_id > %d AND t.term_id <= %d',
 				$this->min_id,
-				$wpdb->terms,
-				$this->min_id + $this->stepping,
-				$where
+				$this->min_id + $this->stepping
 			);
 		}
 
@@ -219,7 +215,6 @@ class Bulk_Task {
 	 *     WP_Term_Query args. Some have overridden defaults, and some are fixed.
 	 *     Anything not mentioned below will operate as normal.
 	 *
-	 *     @type bool   $count                  Always false.
 	 *     @type string $order                  Always 'ASC'.
 	 *     @type string $orderby                Always 'term_id'.
 	 *     @type int    $number                 Defaults to 100.
@@ -240,7 +235,6 @@ class Bulk_Task {
 		);
 
 		// Force some arguments and don't let them get overridden.
-		$args['count']                  = false;
 		$args['order']                  = 'ASC';
 		$args['orderby']                = 'term_id';
 		$args['update_term_meta_cache'] = false;
@@ -255,7 +249,7 @@ class Bulk_Task {
 		$this->max_id = $wpdb->get_var( 'SELECT MAX(term_id) FROM ' . $wpdb->terms ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		// Handle batching.
-		add_filter( 'terms_clauses', [ $this, 'filter__terms_where' ], 9999, 1 );
+		add_filter( 'terms_clauses', [ $this, 'filter__terms_where' ], 9999 );
 
 		// Turn off some automatic behavior that would slow down the process.
 		$this->before_run();
