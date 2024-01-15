@@ -9,20 +9,6 @@
 	<!-- Include Alley rules. -->
 	<rule ref="Alley-Interactive"/>
 
-	<!-- Set the text domain for i18n. -->
-	<rule ref="WordPress.WP.I18n">
-		<properties>
-			<property name="text_domain" type="array" value="alleyinteractive-wp-bulk-task" />
-		</properties>
-	</rule>
-
-	<!-- Set the prefixes for functions etc. -->
-	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
-		<properties>
-			<property name="prefixes" type="array" value="alley,test" />
-		</properties>
-	</rule>
-
 	<!--
 	Pass some flags to PHPCS:
 		p flag: Show progress of the run.
@@ -42,12 +28,26 @@
 	<!-- Set severity to 1 to see everything that isn't effectively turned off. -->
 	<arg name="severity" value="1"/>
 
-	<!-- Exclude the composer vendor folder. -->
-	<exclude-pattern>vendor/</exclude-pattern>
-
 	<!-- Check for cross-version support for PHP 8.0 and higher. -->
 	<config name="testVersion" value="8.0-"/>
 
 	<!-- Ignore compatibility problems with WordPress versions below this value. -->
 	<config name="minimum_supported_wp_version" value="6.0"/>
+
+	<!-- Exclude the composer vendor folder. -->
+	<exclude-pattern>vendor/</exclude-pattern>
+
+		<!-- Set the text domain for i18n. -->
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array" value="alleyinteractive-wp-bulk-task" />
+		</properties>
+	</rule>
+
+	<!-- Set the prefixes for functions etc. -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array" value="alley,test" />
+		</properties>
+	</rule>
 </ruleset>
