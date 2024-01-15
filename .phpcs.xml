@@ -1,9 +1,5 @@
 <?xml version="1.0"?>
-<ruleset
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	name="alleyinteractive/wp-bulk-task"
-	xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/squizlabs/PHP_CodeSniffer/master/phpcs.xsd"
->
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="alleyinteractive/wp-bulk-task" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/squizlabs/PHP_CodeSniffer/master/phpcs.xsd">
 	<description>PHP_CodeSniffer standard for alleyinteractive/wp-bulk-task.</description>
 
 	<!-- Include Alley rules. -->
@@ -37,7 +33,7 @@
 	<!-- Exclude the composer vendor folder. -->
 	<exclude-pattern>vendor/</exclude-pattern>
 
-		<!-- Set the text domain for i18n. -->
+	<!-- Set the text domain for i18n. -->
 	<rule ref="WordPress.WP.I18n">
 		<properties>
 			<property name="text_domain" type="array" value="alleyinteractive-wp-bulk-task" />
