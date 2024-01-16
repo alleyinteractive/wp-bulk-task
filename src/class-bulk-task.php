@@ -16,7 +16,6 @@ use WP_Query;
  * @package alleyinteractive/wp-bulk-task
  */
 class Bulk_Task {
-
 	/**
 	 * The cursor associated with this bulk task.
 	 *
