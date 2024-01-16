@@ -51,7 +51,7 @@ class Test_Bulk_Task extends Test_Case {
 			[
 				'post_type' => 'post',
 			],
-			function( $post ) {
+			function ( $post ) {
 				$post->post_content = str_replace( 'apple', 'banana', $post->post_content );
 				wp_update_post( $post );
 			}
@@ -66,7 +66,7 @@ class Test_Bulk_Task extends Test_Case {
 	public function test_full_run(): void {
 		( new Bulk_Task( 'test_run' ) )->run(
 			[],
-			function( $post ) {
+			function ( $post ) {
 				$post->post_content = str_replace( 'apple', 'banana', $post->post_content );
 				wp_update_post( $post );
 			}
@@ -83,7 +83,7 @@ class Test_Bulk_Task extends Test_Case {
 		$bulk_task->cursor->set( $this->post_ids[0] );
 		$bulk_task->run(
 			[],
-			function( $post ) {
+			function ( $post ) {
 				$post->post_content = str_replace( 'apple', 'banana', $post->post_content );
 				wp_update_post( $post );
 			}
