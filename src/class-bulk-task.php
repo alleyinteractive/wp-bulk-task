@@ -17,7 +17,6 @@ use WP_Query;
  * @package alleyinteractive/wp-bulk-task
  */
 class Bulk_Task {
-
 	/**
 	 * The cursor associated with this bulk task.
 	 *
@@ -89,6 +88,8 @@ class Bulk_Task {
 	 * @link https://github.com/Automattic/vip-go-mu-plugins/blob/develop/vip-helpers/vip-wp-cli.php
 	 */
 	protected function after_batch(): void {
+		global $wp_object_cache;
+
 		// Update cursor with the new min ID.
 		$this->cursor->set( $this->min_id );
 
@@ -104,17 +105,15 @@ class Bulk_Task {
 		// Reset object cache.
 		if ( function_exists( 'vip_reset_local_object_cache' ) ) {
 			vip_reset_local_object_cache();
-		} else {
-			global $wp_object_cache;
+		} elseif ( $wp_object_cache instanceof \RedisCachePro\ObjectCaches\ObjectCacheInterface ) {
+			$wp_object_cache->flush_runtime();
+		} elseif ( is_object( $wp_object_cache ) ) {
+			$wp_object_cache->group_ops      = [];
+			$wp_object_cache->memcache_debug = [];
+			$wp_object_cache->cache          = [];
 
-			if ( is_object( $wp_object_cache ) ) {
-				$wp_object_cache->group_ops      = [];
-				$wp_object_cache->memcache_debug = [];
-				$wp_object_cache->cache          = [];
-
-				if ( method_exists( $wp_object_cache, '__remoteset' ) ) {
-					$wp_object_cache->__remoteset();
-				}
+			if ( method_exists( $wp_object_cache, '__remoteset' ) ) {
+				$wp_object_cache->__remoteset();
 			}
 		}
 
@@ -341,6 +340,9 @@ class Bulk_Task {
 		// Set the max ID from the database.
 		$this->max_id = $wpdb->get_var( 'SELECT MAX(ID) FROM ' . $wpdb->posts ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
+		// Disable ElasticPress or VIP Search integration by default.
+		add_filter( 'ep_skip_query_integration', '__return_true', 100 );
+
 		// Handle pagination.
 		add_filter( 'posts_where', [ $this, 'filter__posts_where' ], 9999, 2 );
 
@@ -379,5 +381,8 @@ class Bulk_Task {
 
 		// Remove filter after task run. Prevents double filtering the query if you're instantiating the class multiple times.
 		remove_filter( 'posts_where', [ $this, 'filter__posts_where' ], 9999 );
+
+		// Remove filter after task run.
+		remove_filter( 'ep_skip_query_integration', '__return_true', 100 );
 	}
 }
