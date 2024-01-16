@@ -207,6 +207,9 @@ class Bulk_Task {
 		// Set the max ID from the database.
 		$this->max_id = $wpdb->get_var( 'SELECT MAX(ID) FROM ' . $wpdb->posts ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
+		// Disable ElasticPress or VIP Search integration by default.
+		add_filter( 'ep_skip_query_integration', '__return_true', 100 );
+
 		// Handle pagination.
 		add_filter( 'posts_where', [ $this, 'filter__posts_where' ], 9999, 2 );
 
@@ -245,5 +248,8 @@ class Bulk_Task {
 
 		// Remove filter after task run. Prevents double filtering the query if you're instantiating the class multiple times.
 		remove_filter( 'posts_where', [ $this, 'filter__posts_where' ], 9999 );
+
+		// Remove filter after task run.
+		remove_filter( 'ep_skip_query_integration', '__return_true', 100 );
 	}
 }

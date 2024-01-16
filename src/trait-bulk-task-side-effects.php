@@ -20,7 +20,6 @@ trait Bulk_Task_Side_Effects {
 	 * Halt integrations and date changes when updating a post.
 	 */
 	protected function pause_side_effects(): void {
-		add_filter( 'ep_skip_query_integration', '__return_true', 100 );
 		add_filter( 'apple_news_skip_push', '__return_true', 100 );
 		add_filter( 'apple_news_should_post_autopublish', '__return_false', 100 );
 		add_filter( 'pp_notification_status_change', '__return_false', 100 );
@@ -32,7 +31,6 @@ trait Bulk_Task_Side_Effects {
 	 * Resume integrations and date changes when updating a post.
 	 */
 	protected function resume_side_effects(): void {
-		remove_filter( 'ep_skip_query_integration', '__return_true', 100 );
 		remove_filter( 'apple_news_skip_push', '__return_true', 100 );
 		remove_filter( 'apple_news_should_post_autopublish', '__return_false', 100 );
 		remove_filter( 'pp_notification_status_change', '__return_false', 100 );
