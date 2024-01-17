@@ -12,17 +12,14 @@ through a WordPress database for posts using WP_Query-style arguments and keeps
 a cursor of its location within the database in case it is interrupted and needs
 to start again.
 
-
 ## Releases
 
 This package is released via Packagist for installation via Composer. It follows
 semantic versioning conventions.
 
-
 ### Install
 
-Requires Composer and PHP >= 8.0.
-
+Requires Composer and PHP >= `8.0`.
 
 ### Use
 
@@ -42,6 +39,7 @@ Then use the class in your custom CLI command:
 
 ```php
 class My_Custom_CLI_Command extends WP_CLI_Command {
+	use Bulk_Task_Side_Effects;
 
 	/**
 	 * Replace all instances of 'apple' with 'banana' in post content.
@@ -56,9 +54,8 @@ class My_Custom_CLI_Command extends WP_CLI_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *     wp my-custom-cli-command bananaify
-	 *
-	 * @subcommand bananaify
+	 *     # Bananaify links.
+	 *     $ wp my-custom-cli-command bananaify
 	 */
 	public function bananaify( $args, $assoc_args ) {
 		$bulk_task = new \Alley\WP_Bulk_Task\Bulk_Task(
@@ -74,6 +71,8 @@ class My_Custom_CLI_Command extends WP_CLI_Command {
 			WP_CLI::log( __( 'Rewound the cursor. Run again without the --rewind flag to process posts.', 'my-textdomain' ) );
 			return;
 		}
+
+		$this->pause_side_effects();
 
 		// Set up and run the bulk task.
 		$dry_run = ! empty( $assoc_args['dry-run'] );
@@ -102,6 +101,8 @@ class My_Custom_CLI_Command extends WP_CLI_Command {
 				}
 			}
 		);
+
+		$this->resume_side_effects();
 	}
 }
 ```
@@ -146,11 +147,9 @@ Finally, update composer to use the local copy of the package:
 composer update alleyinteractive/wp-bulk-task --prefer-source
 ```
 
-
 ### Changelog
 
 This project keeps a [changelog](CHANGELOG.md).
-
 
 ## Development Process
 
@@ -158,12 +157,10 @@ See instructions above on installing from source. Pull requests are welcome from
 the community and will be considered for inclusion. Releases follow semantic
 versioning and are shipped on an as-needed basis.
 
-
 ### Contributing
 
 See [our contributor guidelines](CONTRIBUTING.md) for instructions on how to
 contribute to this open source project.
-
 
 ## Project Structure
 
@@ -174,20 +171,9 @@ Classes must be autoloadable using
 `alleyinteractive/composer-wordpress-autoloader` and live in the `src`
 directory, following standard WordPress naming conventions for classes.
 
-
-## Third-Party Dependencies
-
-Dependencies are managed by Composer, and include:
-
-- `alleyinteractive/composer-wordpress-autoloader`: Used for autoloading classes
-  that follow the standard WordPress conventions for filenames.
-- `alleyinteractive/alley-coding-standards`: Used for running phpcs linting.
-
-
 ## Related Efforts
 
 - [WP_CLI](https://github.com/wp-cli/wp-cli)
-
 
 ## Maintainers
 
@@ -198,7 +184,6 @@ Dependencies are managed by Composer, and include:
 ### Contributors
 
 Thanks to all of the [contributors](CONTRIBUTORS.md) to this project.
-
 
 ## License
 
