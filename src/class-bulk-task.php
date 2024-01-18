@@ -42,7 +42,7 @@ class Bulk_Task {
 	 * Store the current query object for bulk tasks. Used when filtering the
 	 * WHERE clause and the query object is not provided in the filter.
 	 *
-	 * @var object
+	 * @var object|WP_Query|WP_Term_Query
 	 */
 	protected object $query;
 
@@ -143,8 +143,10 @@ class Bulk_Task {
 	 * This checks the object hash to ensure that we don't manipulate any other
 	 * queries that might run during a bulk task.
 	 *
-	 * @param  string   $where The WHERE clause of the query.
-	 * @param  WP_Query $query The WP_Query instance (passed by reference).
+	 * @global WP_Query $wp_query WordPress Query object.
+	 *
+	 * @param string   $where The WHERE clause of the query.
+	 * @param WP_Query $query The WP_Query instance (passed by reference).
 	 *
 	 * @return string WHERE clause with our pagination added.
 	 */
@@ -212,6 +214,8 @@ class Bulk_Task {
 	 * Loop through any number of terms efficiently with a callback, and output
 	 * the progress.
 	 *
+	 * @global WP_Query $wp_query WordPress Query object.
+	 *
 	 * @param array    $args {
 	 *     WP_Term_Query args. Some have overridden defaults, and some are fixed.
 	 *     Anything not mentioned below will operate as normal.
@@ -247,7 +251,7 @@ class Bulk_Task {
 		$this->min_id = $this->cursor->get();
 
 		// Set the max ID from the database.
-		$this->max_id = $wpdb->get_var( 'SELECT MAX(term_taxonomy_id) FROM ' . $wpdb->term_taxonomy ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$this->max_id = (int) $wpdb->get_var( 'SELECT MAX(term_taxonomy_id) FROM ' . $wpdb->term_taxonomy ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		// Handle batching.
 		add_filter( 'terms_clauses', [ $this, 'filter__terms_where' ], 9999 );
@@ -292,6 +296,8 @@ class Bulk_Task {
 	/**
 	 * Loop through any number of posts efficiently with a callback, and output
 	 * the progress.
+	 *
+	 * @global WP_Query $wp_query WordPress Query object.
 	 *
 	 * @param array    $args {
 	 *     WP_Query args. Some have overridden defaults, and some are fixed.
@@ -338,7 +344,7 @@ class Bulk_Task {
 		$this->min_id = $this->cursor->get();
 
 		// Set the max ID from the database.
-		$this->max_id = $wpdb->get_var( 'SELECT MAX(ID) FROM ' . $wpdb->posts ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$this->max_id = (int) $wpdb->get_var( 'SELECT MAX(ID) FROM ' . $wpdb->posts ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		// Disable ElasticPress or VIP Search integration by default.
 		add_filter( 'ep_skip_query_integration', '__return_true', 100 );
