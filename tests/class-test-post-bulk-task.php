@@ -1,19 +1,21 @@
 <?php
 /**
- * Alley\WP_Bulk_Task Tests: Test_Bulk_Task class
+ * Alley\WP_Bulk_Task Tests: Test_Post_Bulk_Task class
  *
  * @package alleyinteractive/wp-bulk-task
  */
 
 use Alley\WP_Bulk_Task\Bulk_Task;
+use Mantle\Testing\Concerns\Refresh_Database;
 use Mantle\Testkit\Test_Case;
 
 /**
- * Tests for the Bulk_Task class.
+ * Tests for the Test_Post_Bulk_Task class.
  *
  * @package alleyinteractive/wp-bulk-task
  */
-class Test_Bulk_Task extends Test_Case {
+class Test_Post_Bulk_Task extends Test_Case {
+	use Refresh_Database;
 
 	/**
 	 * Stores an array of created post IDs used in tests.
@@ -51,11 +53,12 @@ class Test_Bulk_Task extends Test_Case {
 			[
 				'post_type' => 'post',
 			],
-			function ( $post ) {
+			function ( WP_Post $post ): void {
 				$post->post_content = str_replace( 'apple', 'banana', $post->post_content );
 				wp_update_post( $post );
 			}
 		);
+
 		$this->assertEquals( 'banana', get_post( $this->post_ids[0] )->post_content );
 		$this->assertEquals( 'apple', get_post( $this->post_ids[1] )->post_content );
 	}
@@ -66,11 +69,12 @@ class Test_Bulk_Task extends Test_Case {
 	public function test_full_run(): void {
 		( new Bulk_Task( 'test_run' ) )->run(
 			[],
-			function ( $post ) {
+			function ( WP_Post $post ): void {
 				$post->post_content = str_replace( 'apple', 'banana', $post->post_content );
 				wp_update_post( $post );
 			}
 		);
+
 		$this->assertEquals( 'banana', get_post( $this->post_ids[0] )->post_content );
 		$this->assertEquals( 'banana', get_post( $this->post_ids[1] )->post_content );
 	}
@@ -83,11 +87,12 @@ class Test_Bulk_Task extends Test_Case {
 		$bulk_task->cursor->set( $this->post_ids[0] );
 		$bulk_task->run(
 			[],
-			function ( $post ) {
+			function ( WP_Post $post ): void {
 				$post->post_content = str_replace( 'apple', 'banana', $post->post_content );
 				wp_update_post( $post );
 			}
 		);
+
 		$this->assertEquals( 'apple', get_post( $this->post_ids[0] )->post_content );
 		$this->assertEquals( 'banana', get_post( $this->post_ids[1] )->post_content );
 	}
