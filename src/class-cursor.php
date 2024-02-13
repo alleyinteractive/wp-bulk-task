@@ -5,6 +5,8 @@
  * @package alleyinteractive/wp-bulk-task
  */
 
+declare( strict_types=1 );
+
 namespace Alley\WP_Bulk_Task;
 
 /**
@@ -53,10 +55,9 @@ class Cursor {
 	 * Sets the value for the cursor.
 	 *
 	 * @param int $value The new value for the cursor.
-	 *
 	 * @return bool True if the value was successfully set, false otherwise.
 	 */
 	public function set( int $value ): bool {
-		return update_option( $this->option_name, $value );
+		return update_option( $this->option_name, $value, 'no' );
 	}
 }

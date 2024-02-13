@@ -143,14 +143,13 @@ class Bulk_Task {
 	 * This checks the object hash to ensure that we don't manipulate any other
 	 * queries that might run during a bulk task.
 	 *
-	 * @global WP_Query $wp_query WordPress Query object.
+	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
 	 * @param string   $where The WHERE clause of the query.
 	 * @param WP_Query $query The WP_Query instance (passed by reference).
-	 *
 	 * @return string WHERE clause with our pagination added.
 	 */
-	public function filter__posts_where( $where, $query ) {
+	public function filter__posts_where( $where, $query ): string {
 		if ( spl_object_hash( $query ) === $this->object_hash ) {
 			global $wpdb;
 
@@ -178,9 +177,15 @@ class Bulk_Task {
 	 * @link https://github.com/WordPress/wordpress-develop/blob/6.1/src/wp-includes/class-wp-term-query.php#L731
 	 *
 	 * @param array $clauses Associative array of the clauses for the query.
-	 * @return string Filtered array with our batching added to the WHERE clause.
+	 * @return array Filtered array with our batching added to the WHERE clause.
 	 */
-	public function filter__terms_where( $clauses ) {
+	public function filter__terms_where( $clauses ): array {
+
+		// Reset if not an array.
+		if ( ! is_array( $clauses ) ) {
+			$clauses = [];
+		}
+
 		if ( ! empty( $this->query ) && spl_object_hash( $this->query ) === $this->object_hash ) {
 			$clauses['where'] .= sprintf(
 				' AND tt.term_taxonomy_id > %d AND tt.term_taxonomy_id <= %d',
@@ -214,7 +219,7 @@ class Bulk_Task {
 	 * Loop through any number of terms efficiently with a callback, and output
 	 * the progress.
 	 *
-	 * @global WP_Query $wp_query WordPress Query object.
+	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
 	 * @param array    $args {
 	 *     WP_Term_Query args. Some have overridden defaults, and some are fixed.
@@ -297,7 +302,7 @@ class Bulk_Task {
 	 * Loop through any number of posts efficiently with a callback, and output
 	 * the progress.
 	 *
-	 * @global WP_Query $wp_query WordPress Query object.
+	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
 	 * @param array    $args {
 	 *     WP_Query args. Some have overridden defaults, and some are fixed.
