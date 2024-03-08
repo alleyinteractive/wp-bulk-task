@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed incorrect usage of `@global`.
 - Improve typecasting of the `filter__terms_where` and `filter__posts_where` methods.
 - Support for `declare( strict_types=1 );`, to return any PHP errors.
+- Adds compatibility with Edit Flow plugin; prevents notifications during bulk tasks.
 
 ## [0.2.1] - 2024-01-18
 
