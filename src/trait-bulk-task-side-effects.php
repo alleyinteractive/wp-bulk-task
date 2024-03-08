@@ -25,6 +25,7 @@ trait Bulk_Task_Side_Effects {
 		add_filter( 'pp_notification_status_change', '__return_false', 100 );
 		add_filter( 'pp_notification_editorial_comment', '__return_false', 100 );
 		add_filter( 'wp_insert_post_data', [ $this, 'revert_post_modified_date' ], 10, 2 );
+		add_filter( 'ef_notification_status_change', '__return_false', 999 );
 	}
 
 	/**
@@ -35,7 +36,8 @@ trait Bulk_Task_Side_Effects {
 		remove_filter( 'apple_news_should_post_autopublish', '__return_false', 100 );
 		remove_filter( 'pp_notification_status_change', '__return_false', 100 );
 		remove_filter( 'pp_notification_editorial_comment', '__return_false', 100 );
-		remove_filter( 'wp_insert_post_data', [ $this, 'revert_post_modified_date' ], 10, 2 );
+		remove_filter( 'wp_insert_post_data', [ $this, 'revert_post_modified_date' ], 10 );
+		remove_filter( 'ef_notification_status_change', '__return_false', 999 );
 	}
 
 	/**
