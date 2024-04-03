@@ -212,24 +212,25 @@ class Bulk_Task {
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
 	 * @param WP_User_Query $query Current instance of WP_User_Query (passed by reference).
-	 * @return WP_User_Query
 	 */
-	public function filter__users_where( $query ): WP_User_Query {
-		if ( spl_object_hash( $query ) === $this->object_hash ) {
-			global $wpdb;
+	public function filter__users_where( $query ): void {
 
-			$user_table = $wpdb->users; // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.user_meta__wpdb__users
-
-			$query->query_where .= sprintf(
-				' AND %s.ID > %d AND %s.ID <= %d',
-				$user_table,
-				$this->min_id,
-				$user_table,
-				$this->min_id + $this->stepping
-			);
+		// Bail early.
+		if ( spl_object_hash( $query ) !== $this->object_hash ) {
+			return;
 		}
 
-		return $query;
+		global $wpdb;
+
+		$user_table = $wpdb->users; // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.user_meta__wpdb__users
+
+		$query->query_where .= sprintf(
+			' AND %s.ID > %d AND %s.ID <= %d',
+			$user_table,
+			$this->min_id,
+			$user_table,
+			$this->min_id + $this->stepping
+		);
 	}
 
 	/**
@@ -465,6 +466,8 @@ class Bulk_Task {
 	 * }
 	 * @param callable $callable Callback function to invoke for each post.
 	 *                           The callable will be passed a post object.
+	 *
+	 * @phpstan-param array<mixed> $args
 	 */
 	public function run_wp_user_query( array $args, callable $callable ): void {
 		global $wpdb;
