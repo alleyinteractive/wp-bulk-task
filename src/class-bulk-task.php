@@ -11,6 +11,7 @@ use Alley\WP_Bulk_Task\Progress\Progress;
 use WP_Term_Query;
 use WP_Query;
 use WP_User_Query;
+use WP_Post;
 
 /**
  * A class that provides performant bulk task functionality.
@@ -106,12 +107,21 @@ class Bulk_Task {
 		// Reset object cache.
 		if ( function_exists( 'vip_reset_local_object_cache' ) ) {
 			vip_reset_local_object_cache();
-		} elseif ( $wp_object_cache instanceof \RedisCachePro\ObjectCaches\ObjectCacheInterface ) {
-			$wp_object_cache->flush_runtime();
+		} elseif ( $wp_object_cache instanceof \RedisCachePro\ObjectCaches\ObjectCacheInterface && method_exists( $wp_object_cache, 'flush_runtime' ) ) { // @phpstan-ignore-line
+			$wp_object_cache->flush_runtime(); // @phpstan-ignore-line
 		} elseif ( is_object( $wp_object_cache ) ) {
-			$wp_object_cache->group_ops      = [];
-			$wp_object_cache->memcache_debug = [];
-			$wp_object_cache->cache          = [];
+
+			if ( isset( $wp_object_cache->group_ops ) ) {
+				$wp_object_cache->group_ops = [];
+			}
+
+			if ( isset( $wp_object_cache->memcache_debug ) ) {
+				$wp_object_cache->memcache_debug = [];
+			}
+
+			if ( isset( $wp_object_cache->cache ) ) {
+				$wp_object_cache->cache = [];
+			}
 
 			if ( method_exists( $wp_object_cache, '__remoteset' ) ) {
 				$wp_object_cache->__remoteset();
@@ -175,8 +185,8 @@ class Bulk_Task {
 	 * This checks the object hash to ensure that we don't manipulate any other
 	 * queries that might run during a bulk task.
 	 *
-	 * @param array $clauses Associative array of the clauses for the query.
-	 * @return array Filtered array with our batching added to the WHERE clause.
+	 * @param array<mixed> $clauses Associative array of the clauses for the query.
+	 * @return array<mixed> Associative array of the clauses for the query.
 	 */
 	public function filter__terms_where( $clauses ): array {
 
@@ -226,18 +236,26 @@ class Bulk_Task {
 	 * Loop through any number of objects efficiently with a callback, and output
 	 * the progress.
 	 *
-	 * @param array    $args Array of args to pass to query.
-	 * @param callable $callable Callback function to invoke for each object.
+	 * @throws \Exception If method is not found.
+	 *
+	 * @param array<mixed> $args Array of args to pass to query.
+	 * @param callable     $callable Callback function to invoke for each object.
 	 *                           The callable will be passed an object of the
 	 *                           specified type.
-	 * @param string   $object_type Type of object to query.
+	 * @param string       $object_type Type of object to query.
 	 */
 	public function run( array $args, callable $callable, string $object_type = 'wp_post' ): void {
-		if ( ! method_exists( $this, "run_${object_type}_query" ) ) {
+		if ( ! method_exists( $this, "run_{$object_type}_query" ) ) {
 			return;
 		}
 
-		call_user_func( [ $this, "run_${object_type}_query" ], $args, $callable );
+		$method_callback = [ $this, "run_{$object_type}_query" ];
+
+		if ( ! is_callable( $method_callback ) ) {
+			throw new \Exception( 'Invalid method callback.' );
+		}
+
+		call_user_func( $method_callback, $args, $callable );
 	}
 
 	/**
@@ -257,6 +275,8 @@ class Bulk_Task {
 	 * }
 	 * @param callable $callable Callback function to invoke for each post.
 	 *                           The callable will be passed a post object.
+	 *
+	 * @phpstan-param array{order: 'ASC', orderby: 'term_id', number: 0, update_term_meta_cache: false} $args
 	 */
 	public function run_wp_term_query( array $args, callable $callable ): void {
 		global $wpdb;
@@ -345,6 +365,8 @@ class Bulk_Task {
 	 * }
 	 * @param callable $callable Callback function to invoke for each post.
 	 *                           The callable will be passed a post object.
+	 *
+	 * @phpstan-param array<mixed> $args
 	 */
 	public function run_wp_post_query( array $args, callable $callable ): void {
 		global $wpdb;
@@ -402,7 +424,8 @@ class Bulk_Task {
 				array_walk( $query->posts, $callable );
 
 				// Update our min ID for the next query.
-				$this->min_id = end( $query->posts )->ID;
+				$last_post    = end( $query->posts );
+				$this->min_id = $last_post instanceof WP_Post ? $last_post->ID : 0;
 			} else {
 				// No results found in the block of posts, so skip ahead.
 				$this->min_id += $this->stepping;

@@ -38,7 +38,13 @@ class Cursor {
 	 * @return int The current value for the cursor.
 	 */
 	public function get(): int {
-		return (int) get_option( $this->option_name, 0 );
+		$cursor_value = get_option( $this->option_name, 0 );
+
+		if ( ! is_numeric( $cursor_value ) ) {
+			return 0;
+		}
+
+		return (int) $cursor_value;
 	}
 
 	/**
