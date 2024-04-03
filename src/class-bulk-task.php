@@ -12,6 +12,8 @@ namespace Alley\WP_Bulk_Task;
 use Alley\WP_Bulk_Task\Progress\Progress;
 use WP_Term_Query;
 use WP_Query;
+use WP_User_Query;
+use WP_Post;
 use SplFileObject;
 use Exception;
 
@@ -46,7 +48,7 @@ class Bulk_Task {
 	 * Store the current query object for bulk tasks. Used when filtering the
 	 * WHERE clause and the query object is not provided in the filter.
 	 *
-	 * @var object|WP_Query|WP_Term_Query
+	 * @var object|WP_Query|WP_Term_Query|WP_User_Query
 	 */
 	protected object $query;
 
@@ -112,12 +114,21 @@ class Bulk_Task {
 		// Reset object cache.
 		if ( function_exists( 'vip_reset_local_object_cache' ) ) {
 			vip_reset_local_object_cache();
-		} elseif ( $wp_object_cache instanceof \RedisCachePro\ObjectCaches\ObjectCacheInterface ) {
-			$wp_object_cache->flush_runtime();
+		} elseif ( $wp_object_cache instanceof \RedisCachePro\ObjectCaches\ObjectCacheInterface && method_exists( $wp_object_cache, 'flush_runtime' ) ) { // @phpstan-ignore-line
+			$wp_object_cache->flush_runtime(); // @phpstan-ignore-line
 		} elseif ( is_object( $wp_object_cache ) ) {
-			$wp_object_cache->group_ops      = [];
-			$wp_object_cache->memcache_debug = [];
-			$wp_object_cache->cache          = [];
+
+			if ( isset( $wp_object_cache->group_ops ) ) {
+				$wp_object_cache->group_ops = [];
+			}
+
+			if ( isset( $wp_object_cache->memcache_debug ) ) {
+				$wp_object_cache->memcache_debug = [];
+			}
+
+			if ( isset( $wp_object_cache->cache ) ) {
+				$wp_object_cache->cache = [];
+			}
 
 			if ( method_exists( $wp_object_cache, '__remoteset' ) ) {
 				$wp_object_cache->__remoteset();
@@ -187,10 +198,8 @@ class Bulk_Task {
 	 * This checks the object hash to ensure that we don't manipulate any other
 	 * queries that might run during a bulk task.
 	 *
-	 * @link https://github.com/WordPress/wordpress-develop/blob/6.1/src/wp-includes/class-wp-term-query.php#L731
-	 *
-	 * @param array $clauses Associative array of the clauses for the query.
-	 * @return array Filtered array with our batching added to the WHERE clause.
+	 * @param array<mixed> $clauses Associative array of the clauses for the query.
+	 * @return array<mixed> Associative array of the clauses for the query.
 	 */
 	public function filter__terms_where( $clauses ): array {
 
@@ -211,21 +220,56 @@ class Bulk_Task {
 	}
 
 	/**
-	 * Loop through any number of objects efficiently with a callback, and output
-	 * the progress.
+	 * Manipulate the WHERE clause of a bulk task user query to paginate by ID.
 	 *
-	 * @param array    $args Array of args to pass to query.
-	 * @param callable $callable Callback function to invoke for each object.
-	 *                           The callable will be passed an object of the
-	 *                           specified type.
-	 * @param string   $object_type Type of object to query.
+	 * @global wpdb $wpdb WordPress database abstraction object.
+	 *
+	 * @param WP_User_Query $query Current instance of WP_User_Query (passed by reference).
 	 */
-	public function run( array $args, callable $callable, string $object_type = 'wp_post' ): void {
-		if ( ! method_exists( $this, "run_${object_type}_query" ) ) {
+	public function filter__users_where( $query ): void {
+
+		// Bail early.
+		if ( spl_object_hash( $query ) !== $this->object_hash ) {
 			return;
 		}
 
-		call_user_func( [ $this, "run_${object_type}_query" ], $args, $callable );
+		global $wpdb;
+
+		$user_table = $wpdb->users; // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.user_meta__wpdb__users
+
+		$query->query_where .= sprintf(
+			' AND %s.ID > %d AND %s.ID <= %d',
+			$user_table,
+			$this->min_id,
+			$user_table,
+			$this->min_id + $this->stepping
+		);
+	}
+
+	/**
+	 * Loop through any number of objects efficiently with a callback, and output
+	 * the progress.
+	 *
+	 * @throws \Exception If method is not found.
+	 *
+	 * @param array<mixed> $args Array of args to pass to query.
+	 * @param callable     $callable Callback function to invoke for each object.
+	 *                           The callable will be passed an object of the
+	 *                           specified type.
+	 * @param string       $object_type Type of object to query.
+	 */
+	public function run( array $args, callable $callable, string $object_type = 'wp_post' ): void {
+		if ( ! method_exists( $this, "run_{$object_type}_query" ) ) {
+			return;
+		}
+
+		$method_callback = [ $this, "run_{$object_type}_query" ];
+
+		if ( ! is_callable( $method_callback ) ) {
+			throw new \Exception( 'Invalid method callback.' );
+		}
+
+		call_user_func( $method_callback, $args, $callable );
 	}
 
 	/**
@@ -347,6 +391,8 @@ class Bulk_Task {
 	 * }
 	 * @param callable $callable Callback function to invoke for each post.
 	 *                           The callable will be passed a post object.
+	 *
+	 * @phpstan-param array{order: 'ASC', orderby: 'term_id', number: 0, update_term_meta_cache: false} $args
 	 */
 	public function run_wp_term_query( array $args, callable $callable ): void {
 		global $wpdb;
@@ -430,6 +476,8 @@ class Bulk_Task {
 	 * }
 	 * @param callable $callable Callback function to invoke for each post.
 	 *                           The callable will be passed a post object.
+	 *
+	 * @phpstan-param array<mixed> $args
 	 */
 	public function run_wp_post_query( array $args, callable $callable ): void {
 		global $wpdb;
@@ -487,7 +535,8 @@ class Bulk_Task {
 				array_walk( $query->posts, $callable );
 
 				// Update our min ID for the next query.
-				$this->min_id = end( $query->posts )->ID;
+				$last_post    = end( $query->posts );
+				$this->min_id = $last_post instanceof WP_Post ? $last_post->ID : 0;
 			} else {
 				// No results found in the block of posts, so skip ahead.
 				$this->min_id += $this->stepping;
@@ -505,5 +554,96 @@ class Bulk_Task {
 
 		// Remove filter after task run.
 		remove_filter( 'ep_skip_query_integration', '__return_true', 100 );
+	}
+
+	/**
+	 * Loop through any number of users efficiently with a callback, and output
+	 * the progress.
+	 *
+	 * @global wpdb $wpdb WordPress database abstraction object.
+	 *
+	 * @param array    $args {
+	 *     WP_User_Query args. Some have overridden defaults, and some are fixed.
+	 *     Anything not mentioned below will operate as normal.
+	 *
+	 *     @type string $order               Always 'ASC'.
+	 *     @type string $orderby             Always 'ID'.
+	 *     @type int    $paged               Always 1.
+	 *     @type int    $paged               Always 1.
+	 *     @type int    $count_total         Always false.
+	 *     @type int    $has_published_posts Always false.
+	 *     @type int    $number              Defaults to 100.
+	 * }
+	 * @param callable $callable Callback function to invoke for each post.
+	 *                           The callable will be passed a post object.
+	 *
+	 * @phpstan-param array<mixed> $args
+	 */
+	public function run_wp_user_query( array $args, callable $callable ): void {
+		global $wpdb;
+
+		// Apply default arguments.
+		$args = wp_parse_args( $args, [ 'number' => 100 ] );
+
+		// Force some arguments and don't let them get overridden.
+		$args['order']               = 'ASC';
+		$args['orderby']             = 'ID';
+		$args['paged']               = 1;
+		$args['has_published_posts'] = false;
+		$args['count_total']         = false;
+
+		// Ensure stepping is the larger of the configured value and number.
+		$this->stepping = max( $this->stepping, $args['number'] );
+
+		// Set the min ID from the cursor.
+		$this->min_id = $this->cursor->get();
+
+		// Set the max ID from the database.
+		$this->max_id = (int) $wpdb->get_var( 'SELECT MAX(ID) FROM ' . $wpdb->users ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPressVIPMinimum.Variables.RestrictedVariables.user_meta__wpdb__users
+
+		// Handle batching.
+		add_action( 'pre_user_query', [ $this, 'filter__users_where' ], 9999 );
+
+		// Turn off some automatic behavior that would slow down the process.
+		$this->before_run();
+
+		// All systems go.
+		while ( $this->min_id < $this->max_id ) {
+			// Build the query object.
+			$this->query = new WP_User_Query();
+
+			// Store the unique object hash to ensure we only filter this query.
+			$this->object_hash = spl_object_hash( $this->query );
+
+			// Prepare the query.
+			$this->query->prepare_query( $args );
+
+			// Run the query.
+			$this->query->query();
+
+			// Get the results.
+			$results = $this->query->get_results();
+
+			// Fork for results vs. not.
+			if ( ! empty( $results ) ) {
+				// Invoke the callable over every term.
+				array_walk( $results, $callable );
+
+				// Update our min ID for the next query.
+				$this->min_id = end( $results )->ID;
+			} else {
+				// No results found in the block of users, so skip ahead.
+				$this->min_id += $this->stepping;
+			}
+
+			// Actions to run after each batch of results.
+			$this->after_batch();
+		}
+
+		// Re-enable automatic behavior turned off earlier.
+		$this->after_run();
+
+		// Remove action after task run. Prevents double filtering the query if you're instantiating the class multiple times.
+		remove_action( 'pre_user_query', [ $this, 'filter__users_where' ], 9999 );
 	}
 }
