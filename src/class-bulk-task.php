@@ -5,6 +5,8 @@
  * @package alleyinteractive/wp-bulk-task
  */
 
+declare( strict_types=1 );
+
 namespace Alley\WP_Bulk_Task;
 
 use Alley\WP_Bulk_Task\Progress\Progress;
@@ -12,6 +14,8 @@ use WP_Term_Query;
 use WP_Query;
 use WP_User_Query;
 use WP_Post;
+use SplFileObject;
+use Exception;
 
 /**
  * A class that provides performant bulk task functionality.
@@ -86,6 +90,9 @@ class Bulk_Task {
 	 * helper functions if they exist, or falls back to a manual implementation if
 	 * not.
 	 *
+	 * @global wpdb $wpdb WordPress database abstraction object.
+	 * @global WP_Object_Cache $wp_object_cache Object cache global instance.
+	 *
 	 * @link https://github.com/Automattic/vip-go-mu-plugins/blob/develop/vip-helpers/vip-caching.php
 	 * @link https://github.com/Automattic/vip-go-mu-plugins/blob/develop/vip-helpers/vip-wp-cli.php
 	 */
@@ -136,7 +143,10 @@ class Bulk_Task {
 	 * Actions to take after a bulk task is run.
 	 */
 	protected function after_run(): void {
-		wp_defer_term_counting( false );
+		if ( function_exists( 'wp_defer_term_counting' ) ) {
+			wp_defer_term_counting( false );
+		}
+
 		$this->progress?->set_finished();
 	}
 
@@ -144,7 +154,10 @@ class Bulk_Task {
 	 * Actions to take before a bulk task is run.
 	 */
 	protected function before_run(): void {
-		wp_defer_term_counting( true );
+		if ( function_exists( 'wp_defer_term_counting' ) ) {
+			wp_defer_term_counting( true );
+		}
+
 		$this->progress?->set_total( $this->max_id );
 	}
 
@@ -260,6 +273,110 @@ class Bulk_Task {
 	}
 
 	/**
+	 * Loop through any number of rows in a CSV file efficiently with a callback, and output progress.
+	 *
+	 * @throws Exception If the CSV file does not exist or is not readable.
+	 *
+	 * @param array    $args {
+	 *     Args for the CSV query.
+	 *     @type string $csv    Path to the CSV file.
+	 *     @type int    $number Number of rows to clear cursor in each batch.
+	 * }
+	 * @param callable $callable Callback function to invoke for each row.
+	 *                           The callable will be passed a row array.
+	 *
+	 * @phpstan-param array<mixed> $args
+	 */
+	public function run_csv_query( array $args, callable $callable ): void {
+
+		// Apply default arguments.
+		$args = wp_parse_args(
+			$args,
+			[
+				'csv'    => '',
+				'number' => 100,
+			],
+		);
+
+		// Ensure the CSV file exists and is readable.
+		if ( empty( $args['csv'] ) || ! is_readable( $args['csv'] ) ) {
+			throw new Exception( 'The CSV file does not exist or is not readable.' );
+		}
+
+		/**
+		 * If the CSV document was created or is read on a Legacy Macintosh computer,
+		 * help PHP detect line ending.
+		 *
+		 * @see https://php.watch/versions/8.1/auto_detect_line_endings-ini-deprecated
+		 */
+		if ( version_compare( PHP_VERSION, '8.1.0', '<' ) ) {
+			if ( ! ini_get( 'auto_detect_line_endings' ) ) {
+				ini_set( 'auto_detect_line_endings', '1' );
+			}
+		}
+
+		// It assumes that the file is encoded in UTF-8.
+		try {
+			$csv = new SplFileObject( $args['csv'], 'r' );
+		} catch ( Exception $e ) {
+			throw new Exception( $e->getMessage() ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+		}
+
+		// Set the CSV flags.
+		$csv->setFlags( SplFileObject::READ_CSV | SplFileObject::READ_AHEAD | SplFileObject::SKIP_EMPTY | SplFileObject::DROP_NEW_LINE );
+
+		// Set the min ID from the cursor.
+		$this->min_id = $this->cursor->get();
+
+		// Set the max ID from CSV file.
+		$csv->seek( PHP_INT_MAX );
+		$this->max_id = $csv->key();
+
+		// Turn off some automatic behavior that would slow down the process.
+		$this->before_run();
+
+		/**
+		 * We do not run rows in batches since the CSV file outputs all rows at once.
+		 *
+		 * But we need it for the cursor, progress to be updated, and resetting
+		 * the object cache.
+		 */
+		$batch_size = 0;
+
+		// All systems go.
+		foreach ( $csv as $row ) {
+			$line_number = $csv->key();
+
+			// Skip lines outside of the range.
+			if ( $line_number < $this->min_id || $line_number > $this->max_id ) {
+				continue;
+			}
+
+			if ( $batch_size < $args['number'] ) {
+				$batch_size++;
+			}
+
+			$callable( $row );
+
+			// Batch size reached, so update the cursor.
+			if ( 100 === $batch_size ) {
+				$batch_size = 0;
+
+				// Update our min ID for the next batch.
+				$this->min_id = $line_number;
+			}
+
+			$this->after_batch();
+		}
+
+		// Unset the CSV file. Required to close the file stream.
+		unset( $csv );
+
+		// Re-enable automatic behavior turned off earlier.
+		$this->after_run();
+	}
+
+	/**
 	 * Loop through any number of terms efficiently with a callback, and output
 	 * the progress.
 	 *
@@ -271,24 +388,19 @@ class Bulk_Task {
 	 *
 	 *     @type string $order                  Always 'ASC'.
 	 *     @type string $orderby                Always 'term_id'.
-	 *     @type int    $number                 Defaults to 0 (all).
 	 *     @type bool   $update_term_meta_cache Always false.
+	 *     @type int    $number                 Defaults to 0 (all).
 	 * }
 	 * @param callable $callable Callback function to invoke for each post.
 	 *                           The callable will be passed a post object.
 	 *
-	 * @phpstan-param array{order: 'ASC', orderby: 'term_id', number: 0, update_term_meta_cache: false} $args
+	 * @phpstan-param array<mixed> $args
 	 */
 	public function run_wp_term_query( array $args, callable $callable ): void {
 		global $wpdb;
 
 		// Apply default arguments.
-		$args = wp_parse_args(
-			$args,
-			[
-				'number' => 0,
-			],
-		);
+		$args = wp_parse_args( $args, [ 'number' => 0 ] );
 
 		// Force some arguments and don't let them get overridden.
 		$args['order']                  = 'ASC';
