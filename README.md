@@ -2,13 +2,13 @@
 
 [![Readme Standard Spec Badge](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
-A library to assist with running performant bulk tasks against WordPress posts.
+A library to assist with running performant bulk tasks against WordPress objects.
 
 ## Background
 
 This package provides a library to make it easier to run bulk tasks against a
 WordPress database in a performant way. It includes functionality to search
-through a WordPress database for posts using WP_Query-style arguments and keeps
+through a WordPress database for posts, terms, and users, and using WP_Query-style arguments and keeps
 a cursor of its location within the database in case it is interrupted and needs
 to start again.
 
