@@ -460,8 +460,8 @@ class Bulk_Task {
 	 *     @type int    $paged               Always 1.
 	 *     @type int    $paged               Always 1.
 	 *     @type int    $count_total         Always false.
+	 *     @type int    $has_published_posts Always false.
 	 *     @type int    $number              Defaults to 100.
-	 *     @type int    $has_published_posts Defaults to false.
 	 * }
 	 * @param callable $callable Callback function to invoke for each post.
 	 *                           The callable will be passed a post object.
