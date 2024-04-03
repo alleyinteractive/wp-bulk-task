@@ -284,6 +284,8 @@ class Bulk_Task {
 	 * }
 	 * @param callable $callable Callback function to invoke for each row.
 	 *                           The callable will be passed a row array.
+	 *
+	 * @phpstan-param array<mixed> $args
 	 */
 	public function run_csv_query( array $args, callable $callable ): void {
 
@@ -386,13 +388,13 @@ class Bulk_Task {
 	 *
 	 *     @type string $order                  Always 'ASC'.
 	 *     @type string $orderby                Always 'term_id'.
-	 *     @type int    $number                 Defaults to 0 (all).
 	 *     @type bool   $update_term_meta_cache Always false.
+	 *     @type int    $number                 Defaults to 0 (all).
 	 * }
 	 * @param callable $callable Callback function to invoke for each post.
 	 *                           The callable will be passed a post object.
 	 *
-	 * @phpstan-param array{order: 'ASC', orderby: 'term_id', number: 0, update_term_meta_cache: false} $args
+	 * @phpstan-param array<mixed> $args
 	 */
 	public function run_wp_term_query( array $args, callable $callable ): void {
 		global $wpdb;
