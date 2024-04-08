@@ -356,7 +356,7 @@ class Bulk_Task {
 				$batch_size++;
 			}
 
-			$callable( $row );
+			$callable( $row, $line_number );
 
 			// Batch size reached, so update the cursor.
 			if ( 100 === $batch_size ) {
