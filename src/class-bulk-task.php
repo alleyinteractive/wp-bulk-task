@@ -436,7 +436,7 @@ class Bulk_Task {
 			// Fork for results vs. not.
 			if ( ! empty( $this->query->terms ) ) {
 				// Invoke the callable over every term.
-				array_walk( $this->query->terms, $callable );
+				array_walk( $this->query->terms, $callable, $this->query );
 
 				// Update our min ID for the next query.
 				$this->min_id = end( $this->query->terms )->term_taxonomy_id;
@@ -523,21 +523,21 @@ class Bulk_Task {
 		// All systems go.
 		while ( $this->min_id < $this->max_id ) {
 			// Build the query object, but don't run it without the object hash.
-			$query = new WP_Query();
+			$this->query = new WP_Query();
 
 			// Store the unique object hash to ensure we only filter this query.
-			$this->object_hash = spl_object_hash( $query );
+			$this->object_hash = spl_object_hash( $this->query );
 
 			// Run the query.
-			$query->query( $args );
+			$this->query->query( $args );
 
 			// Fork for results vs. not.
-			if ( $query->have_posts() ) {
+			if ( $this->query->have_posts() ) {
 				// Invoke the callable over every post.
-				array_walk( $query->posts, $callable );
+				array_walk( $this->query->posts, $callable, $this->query );
 
 				// Update our min ID for the next query.
-				$last_post    = end( $query->posts );
+				$last_post    = end( $this->query->posts );
 				$this->min_id = $last_post instanceof WP_Post ? $last_post->ID : 0;
 			} else {
 				// No results found in the block of posts, so skip ahead.
@@ -629,7 +629,7 @@ class Bulk_Task {
 			// Fork for results vs. not.
 			if ( ! empty( $results ) ) {
 				// Invoke the callable over every term.
-				array_walk( $results, $callable );
+				array_walk( $results, $callable, $this->query );
 
 				// Update our min ID for the next query.
 				$this->min_id = end( $results )->ID;
