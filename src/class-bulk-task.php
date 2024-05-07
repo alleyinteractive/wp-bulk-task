@@ -523,21 +523,21 @@ class Bulk_Task {
 		// All systems go.
 		while ( $this->min_id < $this->max_id ) {
 			// Build the query object, but don't run it without the object hash.
-			$this->query = new WP_Query();
+			$query = new WP_Query();
 
 			// Store the unique object hash to ensure we only filter this query.
-			$this->object_hash = spl_object_hash( $this->query );
+			$this->object_hash = spl_object_hash( $query );
 
 			// Run the query.
-			$this->query->query( $args );
+			$query->query( $args );
 
 			// Fork for results vs. not.
-			if ( $this->query->have_posts() ) {
+			if ( $query->have_posts() ) {
 				// Invoke the callable over every post.
-				array_walk( $this->query->posts, $callable, $this->query );
+				array_walk( $query->posts, $callable, $query );
 
 				// Update our min ID for the next query.
-				$last_post    = end( $this->query->posts );
+				$last_post    = end( $query->posts );
 				$this->min_id = $last_post instanceof WP_Post ? $last_post->ID : 0;
 			} else {
 				// No results found in the block of posts, so skip ahead.

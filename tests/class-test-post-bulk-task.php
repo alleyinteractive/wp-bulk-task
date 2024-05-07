@@ -110,6 +110,6 @@ class Test_Post_Bulk_Task extends Test_Case {
 			}
 		);
 
-		$this->assertTrue( is_a( $query, 'WP_Query' ) );
+		$this->assertInstanceOf( 'WP_Query', $query );
 	}
 }

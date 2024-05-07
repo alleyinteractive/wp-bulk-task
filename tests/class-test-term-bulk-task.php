@@ -118,6 +118,6 @@ class Test_Term_Bulk_Task extends Test_Case {
 			'wp_term'
 		);
 
-		$this->assertTrue( is_a( $query, 'WP_Term_Query' ) );
+		$this->assertInstanceOf( 'WP_Term_Query', $query );
 	}
 }
