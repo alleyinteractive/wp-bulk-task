@@ -436,7 +436,7 @@ class Bulk_Task {
 			// Fork for results vs. not.
 			if ( ! empty( $this->query->terms ) ) {
 				// Invoke the callable over every term.
-				array_walk( $this->query->terms, $callable );
+				array_walk( $this->query->terms, $callable, $this->query );
 
 				// Update our min ID for the next query.
 				$this->min_id = end( $this->query->terms )->term_taxonomy_id;
@@ -534,7 +534,7 @@ class Bulk_Task {
 			// Fork for results vs. not.
 			if ( $query->have_posts() ) {
 				// Invoke the callable over every post.
-				array_walk( $query->posts, $callable );
+				array_walk( $query->posts, $callable, $query );
 
 				// Update our min ID for the next query.
 				$last_post    = end( $query->posts );
@@ -629,7 +629,7 @@ class Bulk_Task {
 			// Fork for results vs. not.
 			if ( ! empty( $results ) ) {
 				// Invoke the callable over every term.
-				array_walk( $results, $callable );
+				array_walk( $results, $callable, $this->query );
 
 				// Update our min ID for the next query.
 				$this->min_id = end( $results )->ID;

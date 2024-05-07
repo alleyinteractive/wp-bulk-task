@@ -100,4 +100,24 @@ class Test_Term_Bulk_Task extends Test_Case {
 		$this->assertEquals( 'apple', get_term( $this->term_ids[0] )->name );
 		$this->assertEquals( 'banana', get_term( $this->term_ids[1] )->name );
 	}
+
+	/**
+	 * Tests getting the current query object.
+	 */
+	public function test_get_query(): void {
+		$query = null;
+
+		( new Bulk_Task( 'test_query_run' ) )->run(
+			[
+				'taxonomy'   => [ 'category', 'post_tag' ],
+				'hide_empty' => false,
+			],
+			function ( $_, $__, $term_query ) use ( &$query ): void {
+				$query = $term_query;
+			},
+			'wp_term'
+		);
+
+		$this->assertInstanceOf( 'WP_Term_Query', $query );
+	}
 }

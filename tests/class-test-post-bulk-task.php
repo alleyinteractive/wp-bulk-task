@@ -96,4 +96,20 @@ class Test_Post_Bulk_Task extends Test_Case {
 		$this->assertEquals( 'apple', get_post( $this->post_ids[0] )->post_content );
 		$this->assertEquals( 'banana', get_post( $this->post_ids[1] )->post_content );
 	}
+
+	/**
+	 * Tests getting the current query object.
+	 */
+	public function test_get_query(): void {
+		$query = null;
+
+		( new Bulk_Task( 'test_query_run' ) )->run(
+			[],
+			function ( $_, $__, $post_query ) use ( &$query ): void {
+				$query = $post_query;
+			}
+		);
+
+		$this->assertInstanceOf( 'WP_Query', $query );
+	}
 }

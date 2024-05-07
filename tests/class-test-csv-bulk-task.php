@@ -43,9 +43,7 @@ class Test_CSV_Bulk_Task extends Test_Case {
 		$this->expectExceptionMessage( 'The CSV file does not exist or is not readable.' );
 
 		( new Bulk_Task( 'test_invalid_csv' ) )->run(
-			[
-				'csv' => 'invalid.csv',
-			],
+			[ 'csv' => 'invalid.csv' ],
 			function (): void {},
 			'csv'
 		);
@@ -56,9 +54,7 @@ class Test_CSV_Bulk_Task extends Test_Case {
 	 */
 	public function test_full_run(): void {
 		( new Bulk_Task( 'test_run' ) )->run(
-			[
-				'csv' => $this->csv,
-			],
+			[ 'csv' => $this->csv ],
 			function ( $row ): void {
 				self::factory()->post->create( [ 'post_title' => $row[1] ] );
 			},
@@ -81,9 +77,7 @@ class Test_CSV_Bulk_Task extends Test_Case {
 		$bulk_task = new Bulk_Task( 'test_resumed_run' );
 		$bulk_task->cursor->set( 4 );
 		$bulk_task->run(
-			[
-				'csv' => $this->csv,
-			],
+			[ 'csv' => $this->csv ],
 			function ( $row ) use ( &$rows ): void {
 				$rows[] = $row;
 				self::factory()->post->create( [ 'post_title' => $row[1] ] );

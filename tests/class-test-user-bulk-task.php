@@ -98,4 +98,21 @@ class Test_User_Bulk_Task extends Test_Case {
 		$this->assertEquals( [ 'contributor' ], get_user_by( 'ID', $this->user_ids[0] )->roles );
 		$this->assertEquals( [ 'editor' ], get_user_by( 'ID', $this->user_ids[1] )->roles );
 	}
+
+	/**
+	 * Tests getting the current query object.
+	 */
+	public function test_get_query(): void {
+		$query = null;
+
+		( new Bulk_Task( 'test_query_run' ) )->run(
+			[],
+			function ( $_, $__, $user_query ) use ( &$query ): void {
+				$query = $user_query;
+			},
+			'wp_user'
+		);
+
+		$this->assertInstanceOf( 'WP_User_Query', $query );
+	}
 }
