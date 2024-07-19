@@ -19,6 +19,10 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
+    strategy:
+      matrix:
+        php-version: ['8.1', '8.2', '8.3']
+        wordpress-multisite: ['false', 'true']
 
     steps:
       - uses: actions/checkout@v4
@@ -31,4 +35,5 @@ jobs:
         # See https://github.com/alleyinteractive/action-test-php for more options
         uses: alleyinteractive/action-test-php@develop
         with:
-          php-version: '8.2'
+          php-version: ${{ matrix.php-version }}
+          wordpress-multisite: ${{ matrix.wordpress-multisite }}
