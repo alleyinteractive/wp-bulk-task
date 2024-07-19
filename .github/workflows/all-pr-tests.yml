@@ -13,16 +13,16 @@ jobs:
     # Don't run on draft PRs
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    # Timeout after 10 minutes
-    timeout-minutes: 10
-    # Cancel any existing runs of this workflow
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
-      cancel-in-progress: true
     strategy:
       matrix:
         php-version: ['8.1', '8.2', '8.3']
         wordpress-multisite: ['false', 'true']
+    # Timeout after 10 minutes
+    timeout-minutes: 10
+    # Cancel any existing runs of this workflow
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}-${{ matrix.php-version }}-${{ matrix.wordpress-multisite }}
+      cancel-in-progress: true
 
     steps:
       - uses: actions/checkout@v4
