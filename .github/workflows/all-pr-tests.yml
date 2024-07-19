@@ -1,0 +1,34 @@
+name: "All Pull Request Tests"
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  # We use a single job to ensure that all steps
+  # run in the same environment and reduce the number of minutes used.
+  pr-tests:
+    # Don't run on draft PRs
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    # Timeout after 10 minutes
+    timeout-minutes: 10
+    # Cancel any existing runs of this workflow
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run General Tests
+        # See https://github.com/alleyinteractive/action-test-general for more options
+        uses: alleyinteractive/action-test-general@develop
+
+      - name: Run PHP Tests
+        # See https://github.com/alleyinteractive/action-test-php for more options
+        uses: alleyinteractive/action-test-php@develop
+        with:
+          php-version: '8.2'

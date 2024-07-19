@@ -60,21 +60,6 @@ class Bulk_Task {
 	protected string $object_hash;
 
 	/**
-	 * The slice of IDs in the database within which to look for matching posts.
-	 * By keeping this number higher than the posts_per_page, but smaller than
-	 * the total number of results in very large databases, it enables the right
-	 * balance of performant lookups with moving through the database quickly when
-	 * there are no matches in a particular slice of results.
-	 *
-	 * This property is public and can be overridden, and the logic for
-	 * determining the max ID in the range will take the larger of this property
-	 * and posts_per_page.
-	 *
-	 * @var int
-	 */
-	public int $stepping = 10000;
-
-	/**
 	 * Constructor. Accepts a unique key, which is used to keep track of the
 	 * cursor within the database.
 	 *
@@ -178,11 +163,9 @@ class Bulk_Task {
 			global $wpdb;
 
 			return sprintf(
-				'AND %s.ID > %d AND %s.ID <= %d %s',
+				'AND %s.ID > %d %s',
 				$wpdb->posts,
 				$this->min_id,
-				$wpdb->posts,
-				$this->min_id + $this->stepping,
 				$where
 			);
 		}
@@ -210,9 +193,8 @@ class Bulk_Task {
 
 		if ( ! empty( $this->query ) && spl_object_hash( $this->query ) === $this->object_hash ) {
 			$clauses['where'] .= sprintf(
-				' AND tt.term_taxonomy_id > %d AND tt.term_taxonomy_id <= %d',
-				$this->min_id,
-				$this->min_id + $this->stepping
+				' AND tt.term_taxonomy_id > %d',
+				$this->min_id
 			);
 		}
 
@@ -238,11 +220,9 @@ class Bulk_Task {
 		$user_table = $wpdb->users; // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.user_meta__wpdb__users
 
 		$query->query_where .= sprintf(
-			' AND %s.ID > %d AND %s.ID <= %d',
+			' AND %s.ID > %d',
 			$user_table,
-			$this->min_id,
-			$user_table,
-			$this->min_id + $this->stepping
+			$this->min_id
 		);
 	}
 
@@ -407,9 +387,6 @@ class Bulk_Task {
 		$args['orderby']                = 'term_id';
 		$args['update_term_meta_cache'] = false;
 
-		// Ensure stepping is the larger of the configured value and number.
-		$this->stepping = max( $this->stepping, $args['number'] );
-
 		// Set the min ID from the cursor.
 		$this->min_id = $this->cursor->get();
 
@@ -441,8 +418,8 @@ class Bulk_Task {
 				// Update our min ID for the next query.
 				$this->min_id = end( $this->query->terms )->term_taxonomy_id;
 			} else {
-				// No results found in the block of terms, so skip ahead.
-				$this->min_id += $this->stepping;
+				// No results found in the block of terms, so skip to the end.
+				$this->min_id = $this->max_id;
 			}
 
 			// Actions to run after each batch of results.
@@ -502,9 +479,6 @@ class Bulk_Task {
 		$args['paged']               = 1;
 		$args['suppress_filters']    = false;
 
-		// Ensure stepping is the larger of the configured value and posts_per_page.
-		$this->stepping = max( $this->stepping, $args['posts_per_page'] );
-
 		// Set the min ID from the cursor.
 		$this->min_id = $this->cursor->get();
 
@@ -540,8 +514,8 @@ class Bulk_Task {
 				$last_post    = end( $this->query->posts );
 				$this->min_id = $last_post instanceof WP_Post ? $last_post->ID : 0;
 			} else {
-				// No results found in the block of posts, so skip ahead.
-				$this->min_id += $this->stepping;
+				// No results found in the block of posts, so skip to the end.
+				$this->min_id = $this->max_id;
 			}
 
 			// Actions to run after each batch of results.
@@ -594,9 +568,6 @@ class Bulk_Task {
 		$args['has_published_posts'] = false;
 		$args['count_total']         = false;
 
-		// Ensure stepping is the larger of the configured value and number.
-		$this->stepping = max( $this->stepping, $args['number'] );
-
 		// Set the min ID from the cursor.
 		$this->min_id = $this->cursor->get();
 
@@ -634,8 +605,8 @@ class Bulk_Task {
 				// Update our min ID for the next query.
 				$this->min_id = end( $results )->ID;
 			} else {
-				// No results found in the block of users, so skip ahead.
-				$this->min_id += $this->stepping;
+				// No results found in the block of users, so skip to the end.
+				$this->min_id = $this->max_id;
 			}
 
 			// Actions to run after each batch of results.
