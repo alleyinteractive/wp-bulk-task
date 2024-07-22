@@ -64,6 +64,6 @@ class Cursor {
 	 * @return bool True if the value was successfully set, false otherwise.
 	 */
 	public function set( int $value ): bool {
-		return update_option( $this->option_name, $value, 'no' );
+		return update_option( $this->option_name, $value, false );
 	}
 }

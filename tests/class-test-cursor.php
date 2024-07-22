@@ -33,7 +33,7 @@ class Test_Cursor extends Test_Case {
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 */
-	public function test_curso_option_not_autoload(): void {
+	public function test_cursor_option_not_autoload(): void {
 		global $wpdb;
 
 		$option_name     = 'test-cursor';
@@ -50,7 +50,7 @@ class Test_Cursor extends Test_Case {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$option_autoloaded = $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM $wpdb->options WHERE option_name = %s", $option_name_key ) );
 		$this->assertNotEmpty( $option_autoloaded );
-		$this->assertSame( 'no', $option_autoloaded );
+		$this->assertSame( 'off', $option_autoloaded );
 
 		$this->assertEquals( 1234, $cursor->get() );
 		$cursor->reset();
