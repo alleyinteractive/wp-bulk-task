@@ -20,8 +20,6 @@ trait Bulk_Task_Side_Effects {
 	 * Halt integrations and date changes when updating a post.
 	 */
 	protected function pause_side_effects(): void {
-		add_filter( 'apple_news_skip_push', '__return_true', 100 );
-		add_filter( 'apple_news_should_post_autopublish', '__return_false', 100 );
 		add_filter( 'pp_notification_status_change', '__return_false', 100 );
 		add_filter( 'pp_notification_editorial_comment', '__return_false', 100 );
 		add_filter( 'wp_insert_post_data', [ $this, 'revert_post_modified_date' ], 10, 2 );
@@ -32,8 +30,6 @@ trait Bulk_Task_Side_Effects {
 	 * Resume integrations and date changes when updating a post.
 	 */
 	protected function resume_side_effects(): void {
-		remove_filter( 'apple_news_skip_push', '__return_true', 100 );
-		remove_filter( 'apple_news_should_post_autopublish', '__return_false', 100 );
 		remove_filter( 'pp_notification_status_change', '__return_false', 100 );
 		remove_filter( 'pp_notification_editorial_comment', '__return_false', 100 );
 		remove_filter( 'wp_insert_post_data', [ $this, 'revert_post_modified_date' ], 10 );
