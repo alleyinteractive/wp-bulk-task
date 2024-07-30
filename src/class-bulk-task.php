@@ -133,6 +133,8 @@ class Bulk_Task {
 		}
 
 		$this->progress?->set_finished();
+		remove_filter( 'apple_news_skip_push', '__return_true', 100 );
+		remove_filter( 'apple_news_should_post_autopublish', '__return_false', 100 );
 	}
 
 	/**
@@ -144,6 +146,8 @@ class Bulk_Task {
 		}
 
 		$this->progress?->set_total( $this->max_id );
+		add_filter( 'apple_news_skip_push', '__return_true', 100 );
+		add_filter( 'apple_news_should_post_autopublish', '__return_false', 100 );
 	}
 
 	/**
