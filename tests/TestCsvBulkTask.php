@@ -7,6 +7,8 @@
 
 declare( strict_types=1 );
 
+namespace Alley\WP_Bulk_Task\Tests;
+
 use Alley\WP_Bulk_Task\Bulk_Task;
 use Mantle\Testing\Concerns\Refresh_Database;
 use Mantle\Testkit\Test_Case;
@@ -16,7 +18,7 @@ use Mantle\Testkit\Test_Case;
  *
  * @package alleyinteractive/wp-bulk-task
  */
-class Test_CSV_Bulk_Task extends Test_Case {
+class TestCsvBulkTask extends Test_Case {
 	use Refresh_Database;
 
 	/**
@@ -39,7 +41,7 @@ class Test_CSV_Bulk_Task extends Test_Case {
 	 * Test the run function on a invalid CSV file.
 	 */
 	public function test_invalid_csv(): void {
-		$this->expectException( Exception::class );
+		$this->expectException( \Exception::class );
 		$this->expectExceptionMessage( 'The CSV file does not exist or is not readable.' );
 
 		( new Bulk_Task( 'test_invalid_csv' ) )->run(

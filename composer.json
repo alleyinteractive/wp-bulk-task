@@ -22,6 +22,11 @@
       }
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Alley\\WP_Bulk_Task\\Tests\\": "tests/"
+    }
+  },
   "license": "GPL-2.0-or-later",
   "name": "alleyinteractive/wp-bulk-task",
   "require": {
@@ -30,7 +35,7 @@
   },
   "require-dev": {
     "alleyinteractive/alley-coding-standards": "^2.0",
-    "mantle-framework/testkit": "^0.12",
+    "mantle-framework/testkit": "^1.0",
     "php-stubs/wp-cli-stubs": "^2.10",
     "wp-cli/php-cli-tools": "^0.11",
     "szepeviktor/phpstan-wordpress": "^1.3"

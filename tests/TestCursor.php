@@ -7,6 +7,8 @@
 
 declare( strict_types=1 );
 
+namespace Alley\WP_Bulk_Task\Tests;
+
 use Alley\WP_Bulk_Task\Cursor;
 use Mantle\Testkit\Test_Case;
 
@@ -15,7 +17,7 @@ use Mantle\Testkit\Test_Case;
  *
  * @package alleyinteractive/wp-bulk-task
  */
-class Test_Cursor extends Test_Case {
+class TestCursor extends Test_Case {
 	/**
 	 * Tests the cursor lifecycle (does not exist, created, updated, removed).
 	 */

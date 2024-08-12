@@ -1,14 +1,14 @@
+<?xml version="1.0"?>
 <phpunit
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	bootstrap="tests/bootstrap.php"
 	backupGlobals="false"
 	colors="true"
-	convertErrorsToExceptions="true"
-	convertNoticesToExceptions="true"
-	convertWarningsToExceptions="true"
->
-	<testsuites>
-		<testsuite name="general">
-			<directory prefix="class-test-" suffix=".php">tests</directory>
-		</testsuite>
-	</testsuites>
+	xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+	cacheDirectory=".phpunit.result.cache">
+  <testsuites>
+    <testsuite name="general">
+      <directory prefix="Test" suffix=".php">tests</directory>
+    </testsuite>
+  </testsuites>
 </phpunit>
