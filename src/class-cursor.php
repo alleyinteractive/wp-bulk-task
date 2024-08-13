@@ -5,7 +5,7 @@
  * @package alleyinteractive/wp-bulk-task
  */
 
-declare( strict_types=1 );
+declare(strict_types=1);
 
 namespace Alley\WP_Bulk_Task;
 

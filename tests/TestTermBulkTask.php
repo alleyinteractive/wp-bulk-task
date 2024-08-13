@@ -5,16 +5,19 @@
  * @package alleyinteractive/wp-bulk-task
  */
 
+namespace Alley\WP_Bulk_Task\Tests;
+
 use Alley\WP_Bulk_Task\Bulk_Task;
 use Mantle\Testing\Concerns\Refresh_Database;
 use Mantle\Testkit\Test_Case;
+use WP_Term;
 
 /**
  * Tests for the Test_Term_Bulk_Task class.
  *
  * @package alleyinteractive/wp-bulk-task
  */
-class Test_Term_Bulk_Task extends Test_Case {
+class TestTermBulkTask extends Test_Case {
 	use Refresh_Database;
 
 	/**
