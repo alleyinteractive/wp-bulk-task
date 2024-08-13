@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <phpunit
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	bootstrap="tests/bootstrap.php"
-	backupGlobals="false"
-	colors="true"
-	xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
-	cacheDirectory=".phpunit.result.cache">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  bootstrap="tests/bootstrap.php"
+  backupGlobals="false"
+  colors="true"
+  xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+  cacheDirectory=".phpunit.result.cache">
   <testsuites>
     <testsuite name="general">
       <directory prefix="Test" suffix=".php">tests</directory>
