@@ -19,7 +19,7 @@ semantic versioning conventions.
 
 ### Install
 
-Requires Composer and PHP >= `8.0`.
+Requires Composer and PHP >= `8.1`.
 
 ### Use
 
