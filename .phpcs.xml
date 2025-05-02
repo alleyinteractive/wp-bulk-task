@@ -24,7 +24,7 @@
 	<!-- Set severity to 1 to see everything that isn't effectively turned off. -->
 	<arg name="severity" value="1"/>
 
-	<!-- Check for cross-version support for PHP 8.0 and higher. -->
+	<!-- Check for cross-version support for PHP 8.1 and higher. -->
 	<config name="testVersion" value="8.1-"/>
 
 	<!-- Ignore compatibility problems with WordPress versions below this value. -->
