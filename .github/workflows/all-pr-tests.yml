@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - feature/2.x
     types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
