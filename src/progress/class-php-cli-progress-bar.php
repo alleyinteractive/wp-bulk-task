@@ -29,6 +29,10 @@ class PHP_CLI_Progress_Bar extends \cli\progress\Bar implements Progress {
 	 * @param int $current The new current value for the progress tracker.
 	 */
 	public function set_current( int $current ): void {
+		if ( ! is_int( $this->_current ) ) {
+			$this->_current = 0;
+		}
+
 		$this->tick( $current - $this->_current );
 	}
 
