@@ -150,7 +150,7 @@ class Bulk_Task {
 			call_user_func(
 				$this->after_batch_callback,
 				[
-					'cursor' => $this->key,
+					'cursor' => $this->cursor,
 					'min_id' => $this->min_id,
 					'max_id' => $this->max_id,
 				]
