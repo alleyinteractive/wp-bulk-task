@@ -2,6 +2,10 @@
 /**
  * Alley\WP_Bulk_Task: Bulk_Task class
  *
+ * phpcs:disable Generic.Commenting.DocComment.MissingShort,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPressVIPMinimum.Variables.RestrictedVariables.user_meta__wpdb__users
+ *
+ * @phpstan-var \wpdb $wpdb WordPress database abstraction object.
+ *
  * @package alleyinteractive/wp-bulk-task
  */
 
@@ -10,12 +14,15 @@ declare(strict_types=1);
 namespace Alley\WP_Bulk_Task;
 
 use Alley\WP_Bulk_Task\Progress\Progress;
+use WP_Term;
 use WP_Term_Query;
 use WP_Query;
+use WP_User;
 use WP_User_Query;
 use WP_Post;
 use SplFileObject;
 use Exception;
+use wpdb;
 
 /**
  * A class that provides performant bulk task functionality.
@@ -76,7 +83,7 @@ class Bulk_Task {
 	 * not.
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
-	 * @global WP_Object_Cache $wp_object_cache Object cache global instance.
+	 * @global WP_Object_Cache|\RedisCachePro\ObjectCaches\ObjectCacheInterface $wp_object_cache Object cache global instance.
 	 *
 	 * @link https://github.com/Automattic/vip-go-mu-plugins/blob/develop/vip-helpers/vip-caching.php
 	 * @link https://github.com/Automattic/vip-go-mu-plugins/blob/develop/vip-helpers/vip-wp-cli.php
@@ -91,6 +98,7 @@ class Bulk_Task {
 		if ( function_exists( 'vip_reset_db_query_log' ) ) {
 			vip_reset_db_query_log();
 		} else {
+			/** @var wpdb $wpdb */
 			global $wpdb;
 
 			$wpdb->queries = [];
@@ -99,8 +107,12 @@ class Bulk_Task {
 		// Reset object cache.
 		if ( function_exists( 'vip_reset_local_object_cache' ) ) {
 			vip_reset_local_object_cache();
-		} elseif ( $wp_object_cache instanceof \RedisCachePro\ObjectCaches\ObjectCacheInterface && method_exists( $wp_object_cache, 'flush_runtime' ) ) { // @phpstan-ignore-line
-			$wp_object_cache->flush_runtime(); // @phpstan-ignore-line
+		} elseif (
+			class_exists( '\RedisCachePro\ObjectCaches\ObjectCacheInterface' )
+			&& $wp_object_cache instanceof \RedisCachePro\ObjectCaches\ObjectCacheInterface
+			&& method_exists( $wp_object_cache, 'flush_runtime' )
+		) {
+			$wp_object_cache->flush_runtime();
 		} elseif ( is_object( $wp_object_cache ) ) {
 
 			if ( isset( $wp_object_cache->group_ops ) ) {
@@ -154,12 +166,24 @@ class Bulk_Task {
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
-	 * @param string   $where The WHERE clause of the query.
-	 * @param WP_Query $query The WP_Query instance (passed by reference).
+	 * @param mixed $where The WHERE clause of the query.
+	 * @param mixed $query The WP_Query instance (passed by reference).
+	 *
 	 * @return string WHERE clause with our pagination added.
 	 */
-	public function filter__posts_where( $where, $query ): string {
+	public function filter__posts_where( mixed $where, mixed $query ): string {
+
+		if ( ! is_string( $where ) ) {
+			$where = '';
+		}
+
+		// Bail early.
+		if ( ! $query instanceof WP_Query ) {
+			return $where;
+		}
+
 		if ( spl_object_hash( $query ) === $this->object_hash ) {
+			/** @var wpdb $wpdb */
 			global $wpdb;
 
 			return sprintf(
@@ -181,10 +205,10 @@ class Bulk_Task {
 	 * This checks the object hash to ensure that we don't manipulate any other
 	 * queries that might run during a bulk task.
 	 *
-	 * @param array<mixed> $clauses Associative array of the clauses for the query.
+	 * @param mixed $clauses Associative array of the clauses for the query.
 	 * @return array<mixed> Associative array of the clauses for the query.
 	 */
-	public function filter__terms_where( $clauses ): array {
+	public function filter__terms_where( mixed $clauses ): array {
 
 		// Reset if not an array.
 		if ( ! is_array( $clauses ) ) {
@@ -192,6 +216,11 @@ class Bulk_Task {
 		}
 
 		if ( ! empty( $this->query ) && spl_object_hash( $this->query ) === $this->object_hash ) {
+
+			if ( ! is_string( $clauses['where'] ) ) {
+				$clauses['where'] = '';
+			}
+
 			$clauses['where'] .= sprintf(
 				' AND tt.term_taxonomy_id > %d',
 				$this->min_id
@@ -206,24 +235,36 @@ class Bulk_Task {
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
-	 * @param WP_User_Query $query Current instance of WP_User_Query (passed by reference).
+	 * @param mixed $query Current instance of WP_User_Query (passed by reference).
 	 */
-	public function filter__users_where( $query ): void {
+	public function filter__users_where( mixed $query ): void {
+
+		// Bail early.
+		if ( ! $query instanceof WP_User_Query ) {
+			return;
+		}
 
 		// Bail early.
 		if ( spl_object_hash( $query ) !== $this->object_hash ) {
 			return;
 		}
 
+		/** @var wpdb $wpdb */
 		global $wpdb;
 
-		$user_table = $wpdb->users; // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.user_meta__wpdb__users
+		$query_where = $query->query_where ?? '';
 
-		$query->query_where .= sprintf(
+		if ( ! is_string( $query_where ) ) {
+			$query_where = '';
+		}
+
+		$query_where .= sprintf(
 			' AND %s.ID > %d',
-			$user_table,
+			$wpdb->users,
 			$this->min_id
 		);
+
+		$query->query_where = $query_where;
 	}
 
 	/**
@@ -234,8 +275,8 @@ class Bulk_Task {
 	 *
 	 * @param array<mixed> $args Array of args to pass to query.
 	 * @param callable     $callable Callback function to invoke for each object.
-	 *                           The callable will be passed an object of the
-	 *                           specified type.
+	 *                               The callable will be passed an object of the
+	 *                               specified type.
 	 * @param string       $object_type Type of object to query.
 	 */
 	public function run( array $args, callable $callable, string $object_type = 'wp_post' ): void {
@@ -257,15 +298,13 @@ class Bulk_Task {
 	 *
 	 * @throws Exception If the CSV file does not exist or is not readable.
 	 *
-	 * @param array    $args {
+	 * @param array<mixed> $args {
 	 *     Args for the CSV query.
 	 *     @type string $csv    Path to the CSV file.
 	 *     @type int    $number Number of rows to clear cursor in each batch.
 	 * }
-	 * @param callable $callable Callback function to invoke for each row.
+	 * @param callable     $callable Callback function to invoke for each row.
 	 *                           The callable will be passed a row array.
-	 *
-	 * @phpstan-param array<mixed> $args
 	 */
 	public function run_csv_query( array $args, callable $callable ): void {
 
@@ -277,6 +316,10 @@ class Bulk_Task {
 				'number' => 100,
 			],
 		);
+
+		if ( ! is_string( $args['csv'] ) ) {
+			throw new Exception( 'The CSV file is invalid.' );
+		}
 
 		// Ensure the CSV file exists and is readable.
 		if ( empty( $args['csv'] ) || ! is_readable( $args['csv'] ) ) {
@@ -327,7 +370,7 @@ class Bulk_Task {
 		foreach ( $csv as $row ) {
 			$line_number = $csv->key();
 
-			// Skip lines outside of the range.
+			// Skip lines outside the range.
 			if ( $line_number < $this->min_id || $line_number > $this->max_id ) {
 				continue;
 			}
@@ -362,7 +405,7 @@ class Bulk_Task {
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
-	 * @param array    $args {
+	 * @param array<mixed> $args {
 	 *     WP_Term_Query args. Some have overridden defaults, and some are fixed.
 	 *     Anything not mentioned below will operate as normal.
 	 *
@@ -371,12 +414,11 @@ class Bulk_Task {
 	 *     @type bool   $update_term_meta_cache Always false.
 	 *     @type int    $number                 Defaults to 0 (all).
 	 * }
-	 * @param callable $callable Callback function to invoke for each post.
+	 * @param callable     $callable Callback function to invoke for each post.
 	 *                           The callable will be passed a post object.
-	 *
-	 * @phpstan-param array<mixed> $args
 	 */
 	public function run_wp_term_query( array $args, callable $callable ): void {
+		/** @var wpdb $wpdb */
 		global $wpdb;
 
 		// Apply default arguments.
@@ -391,7 +433,7 @@ class Bulk_Task {
 		$this->min_id = $this->cursor->get();
 
 		// Set the max ID from the database.
-		$this->max_id = (int) $wpdb->get_var( 'SELECT MAX(term_taxonomy_id) FROM ' . $wpdb->term_taxonomy ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$this->max_id = (int) $wpdb->get_var( 'SELECT MAX(term_taxonomy_id) FROM ' . $wpdb->term_taxonomy );
 
 		// Handle batching.
 		add_filter( 'terms_clauses', [ $this, 'filter__terms_where' ], 9999 );
@@ -415,8 +457,8 @@ class Bulk_Task {
 				// Invoke the callable over every term.
 				array_walk( $this->query->terms, $callable, $this->query );
 
-				// Update our min ID for the next query.
-				$this->min_id = end( $this->query->terms )->term_taxonomy_id;
+				$last_term    = end( $this->query->terms );
+				$this->min_id = $last_term instanceof WP_Term ? $last_term->term_taxonomy_id : 0;
 			} else {
 				// No results found in the block of terms, so skip to the end.
 				$this->min_id = $this->max_id;
@@ -439,7 +481,7 @@ class Bulk_Task {
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
-	 * @param array    $args {
+	 * @param array<mixed> $args {
 	 *     WP_Query args. Some have overridden defaults, and some are fixed.
 	 *     Anything not mentioned below will operate as normal.
 	 *
@@ -453,12 +495,11 @@ class Bulk_Task {
 	 *     @type int    $posts_per_page      Defaults to 100.
 	 *     @type bool   $suppress_filters    Always false.
 	 * }
-	 * @param callable $callable Callback function to invoke for each post.
+	 * @param callable     $callable Callback function to invoke for each post.
 	 *                           The callable will be passed a post object.
-	 *
-	 * @phpstan-param array<mixed> $args
 	 */
 	public function run_wp_post_query( array $args, callable $callable ): void {
+		/** @var wpdb $wpdb */
 		global $wpdb;
 
 		// Apply default arguments.
@@ -483,7 +524,7 @@ class Bulk_Task {
 		$this->min_id = $this->cursor->get();
 
 		// Set the max ID from the database.
-		$this->max_id = (int) $wpdb->get_var( 'SELECT MAX(ID) FROM ' . $wpdb->posts ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$this->max_id = (int) $wpdb->get_var( 'SELECT MAX(ID) FROM ' . $wpdb->posts );
 
 		// Disable ElasticPress or VIP Search integration by default.
 		add_filter( 'ep_skip_query_integration', '__return_true', 100 );
@@ -538,7 +579,7 @@ class Bulk_Task {
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
-	 * @param array    $args {
+	 * @param array<mixed> $args {
 	 *     WP_User_Query args. Some have overridden defaults, and some are fixed.
 	 *     Anything not mentioned below will operate as normal.
 	 *
@@ -550,12 +591,11 @@ class Bulk_Task {
 	 *     @type int    $has_published_posts Always false.
 	 *     @type int    $number              Defaults to 100.
 	 * }
-	 * @param callable $callable Callback function to invoke for each post.
+	 * @param callable     $callable Callback function to invoke for each post.
 	 *                           The callable will be passed a post object.
-	 *
-	 * @phpstan-param array<mixed> $args
 	 */
 	public function run_wp_user_query( array $args, callable $callable ): void {
+		/** @var wpdb $wpdb */
 		global $wpdb;
 
 		// Apply default arguments.
@@ -572,7 +612,7 @@ class Bulk_Task {
 		$this->min_id = $this->cursor->get();
 
 		// Set the max ID from the database.
-		$this->max_id = (int) $wpdb->get_var( 'SELECT MAX(ID) FROM ' . $wpdb->users ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPressVIPMinimum.Variables.RestrictedVariables.user_meta__wpdb__users
+		$this->max_id = (int) $wpdb->get_var( 'SELECT MAX(ID) FROM ' . $wpdb->users );
 
 		// Handle batching.
 		add_action( 'pre_user_query', [ $this, 'filter__users_where' ], 9999 );
@@ -588,7 +628,18 @@ class Bulk_Task {
 			// Store the unique object hash to ensure we only filter this query.
 			$this->object_hash = spl_object_hash( $this->query );
 
-			// Prepare the query.
+			/**
+			 * Prepare the query.
+			 *
+			 * @phpstan-var array{
+			 *   order: string,
+			 *   orderby: string,
+			 *   paged: int,
+			 *   count_total: bool,
+			 *   has_published_posts: bool,
+			 *   number: int,
+			 * } $args
+			 */
 			$this->query->prepare_query( $args );
 
 			// Run the query.
@@ -603,7 +654,8 @@ class Bulk_Task {
 				array_walk( $results, $callable, $this->query );
 
 				// Update our min ID for the next query.
-				$this->min_id = end( $results )->ID;
+				$last_user    = end( $results );
+				$this->min_id = $last_user instanceof WP_User ? $last_user->ID : 0;
 			} else {
 				// No results found in the block of users, so skip to the end.
 				$this->min_id = $this->max_id;

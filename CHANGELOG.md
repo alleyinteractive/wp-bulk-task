@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Updated
 
+- PHPStan: upgraded to 2.0.
 - CI: support PHP 8.4.
 
 ## 1.0.0 - 2024-08-13

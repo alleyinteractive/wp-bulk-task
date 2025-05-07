@@ -5,6 +5,13 @@ parameters:
 	# Level 9 is the highest level
 	level: max
 
+	tips:
+		treatPhpDocTypesAsCertain: false
+
+	# Skip since it is not used internally: https://phpstan.org/blog/how-phpstan-analyses-traits
+	excludePaths:
+		- src/trait-bulk-task-side-effects.php
+
 	paths:
 		- src/
 
