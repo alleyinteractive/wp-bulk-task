@@ -131,7 +131,7 @@ class TestUserBulkTask extends Test_Case {
 			'wp_user',
 			function (): void {
 				// Revert the first user's role back to contributor.
-				new WP_User( $this->user_ids[0] )->set_role( 'contributor' );
+				( new WP_User( $this->user_ids[0] ) )->set_role( 'contributor' );
 			}
 		);
 
