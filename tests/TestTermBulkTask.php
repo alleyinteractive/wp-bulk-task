@@ -8,7 +8,6 @@
 namespace Alley\WP_Bulk_Task\Tests;
 
 use Alley\WP_Bulk_Task\Bulk_Task;
-use Mantle\Testing\Concerns\Refresh_Database;
 use Mantle\Testkit\Test_Case;
 use WP_Term;
 
@@ -18,7 +17,6 @@ use WP_Term;
  * @package alleyinteractive/wp-bulk-task
  */
 class TestTermBulkTask extends Test_Case {
-	use Refresh_Database;
 
 	/**
 	 * Stores an array of created term IDs used in tests.
@@ -122,5 +120,34 @@ class TestTermBulkTask extends Test_Case {
 		);
 
 		$this->assertInstanceOf( 'WP_Term_Query', $query );
+	}
+
+	/**
+	 * Test custom after batch callback.
+	 *
+	 * @throws \Exception Thrown when invalid callback is used.
+	 */
+	public function test_custom_after_batch_callback(): void {
+		$term_ids = [];
+
+		( new Bulk_Task( 'test_custom_after_batch_callback' ) )->run(
+			[
+				'taxonomy'   => [ 'category', 'post_tag' ],
+				'hide_empty' => false,
+			],
+			function ( WP_Term $term ) use ( &$term_ids ): void {
+				wp_update_term( $term->term_id, $term->taxonomy, [ 'name' => 'banana' ] );
+				$term_ids[] = $term->term_id;
+			},
+			'wp_term',
+			function () use ( &$term_ids ): void {
+				$term_ids   = [];
+				$term_ids[] = array_pop( $term_ids );
+			}
+		);
+
+		$this->assertEquals( 'banana', get_term( $this->term_ids[0] )->name );
+		$this->assertEquals( 'banana', get_term( $this->term_ids[1] )->name );
+		$this->assertCount( 1, $term_ids );
 	}
 }
