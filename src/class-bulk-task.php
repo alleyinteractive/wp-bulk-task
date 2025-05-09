@@ -381,19 +381,22 @@ class Bulk_Task {
 
 			if ( false === $retval ) {
 				$this->min_id = $line_number;
+
+				$this->after_batch();
 				break;
 			}
 
+			// Batch size reached, so update the cursor.
 			if ( 100 === $batch_size ) {
-				// Batch size reached, so update the cursor.
 				$batch_size = 0;
 
 				// Update our min ID for the next batch.
 				$this->min_id = $line_number;
+
+				// Actions to run after each batch of results.
+				$this->after_batch();
 			}
 		}
-
-		$this->after_batch();
 
 		// Unset the CSV file. Required to close the file stream.
 		unset( $csv );
