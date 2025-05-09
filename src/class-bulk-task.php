@@ -336,18 +336,21 @@ class Bulk_Task {
 				$batch_size++;
 			}
 
-			$callable( $row, $line_number );
+			$retval = $callable( $row, $line_number );
 
-			// Batch size reached, so update the cursor.
-			if ( 100 === $batch_size ) {
+			if ( false === $retval ) {
+				$this->min_id = $line_number;
+				break;
+			} elseif ( 100 === $batch_size ) {
+				// Batch size reached, so update the cursor.
 				$batch_size = 0;
 
 				// Update our min ID for the next batch.
 				$this->min_id = $line_number;
 			}
-
-			$this->after_batch();
 		}
+
+		$this->after_batch();
 
 		// Unset the CSV file. Required to close the file stream.
 		unset( $csv );
@@ -412,11 +415,27 @@ class Bulk_Task {
 
 			// Fork for results vs. not.
 			if ( ! empty( $this->query->terms ) ) {
-				// Invoke the callable over every term.
-				array_walk( $this->query->terms, $callable, $this->query );
+				$halted = false;
+
+				foreach ( $this->query->terms as $term ) {
+					if ( ! $term instanceof \WP_Term ) {
+						continue;
+					}
+
+					$retval = $callable( $term, $this->query );
+
+					if ( false === $retval ) {
+						$this->min_id = $term->term_taxonomy_id;
+						$halted       = true;
+						break;
+					}
+				}
 
 				// Update our min ID for the next query.
-				$this->min_id = end( $this->query->terms )->term_taxonomy_id;
+				if ( ! $halted ) {
+					$last_term    = end( $this->query->terms );
+					$this->min_id = $last_term instanceof \WP_Term ? $last_term->term_taxonomy_id : 0;
+				}
 			} else {
 				// No results found in the block of terms, so skip to the end.
 				$this->min_id = $this->max_id;
@@ -507,12 +526,29 @@ class Bulk_Task {
 
 			// Fork for results vs. not.
 			if ( $this->query->have_posts() ) {
-				// Invoke the callable over every post.
-				array_walk( $this->query->posts, $callable, $this->query );
+				$halted = false;
 
-				// Update our min ID for the next query.
-				$last_post    = end( $this->query->posts );
-				$this->min_id = $last_post instanceof WP_Post ? $last_post->ID : 0;
+				foreach ( $this->query->posts as $post ) {
+
+					if ( ! $post instanceof WP_Post ) {
+						continue;
+					}
+
+					$retval = $callable( $post, $this->query );
+
+					// Save cursor.
+					if ( false === $retval ) {
+						$this->min_id = $post->ID;
+						$halted       = true;
+						break;
+					}
+				}
+
+				if ( ! $halted ) {
+					// Update our min ID for the next query.
+					$last_post    = end( $this->query->posts );
+					$this->min_id = $last_post instanceof WP_Post ? $last_post->ID : 0;
+				}
 			} else {
 				// No results found in the block of posts, so skip to the end.
 				$this->min_id = $this->max_id;
@@ -599,11 +635,26 @@ class Bulk_Task {
 
 			// Fork for results vs. not.
 			if ( ! empty( $results ) ) {
-				// Invoke the callable over every term.
-				array_walk( $results, $callable, $this->query );
+				$halted = false;
 
-				// Update our min ID for the next query.
-				$this->min_id = end( $results )->ID;
+				foreach ( $results as $user ) {
+					if ( ! $user instanceof \WP_User ) {
+						continue;
+					}
+
+					$retval = $callable( $user, $this->query );
+
+					if ( false === $retval ) {
+						$this->min_id = $user->ID;
+						$halted       = true;
+						break;
+					}
+				}
+
+				if ( ! $halted ) {
+					$last_user    = end( $results );
+					$this->min_id = $last_user instanceof \WP_User ? $last_user->ID : 0;
+				}
 			} else {
 				// No results found in the block of users, so skip to the end.
 				$this->min_id = $this->max_id;

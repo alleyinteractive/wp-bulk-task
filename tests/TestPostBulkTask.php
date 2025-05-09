@@ -109,11 +109,37 @@ class TestPostBulkTask extends Test_Case {
 
 		( new Bulk_Task( 'test_query_run' ) )->run(
 			[],
-			function ( $_, $__, $post_query ) use ( &$query ): void {
+			function ( $_, $post_query ) use ( &$query ): void {
 				$query = $post_query;
 			}
 		);
 
 		$this->assertInstanceOf( 'WP_Query', $query );
+	}
+
+	/**
+	 * Test the halt task.
+	 */
+	public function test_halt_task(): void {
+		$bulk_task = new Bulk_Task( 'test_halt_task_run' );
+		$bulk_task->run(
+			[],
+			function ( WP_Post $post ): bool {
+				if ( 'page' === $post->post_type ) {
+					return false;
+				}
+
+				$post->post_content = str_replace( 'apple', 'banana', $post->post_content );
+				wp_update_post( $post );
+
+				return true;
+			}
+		);
+
+		// Check the cursor reflects the halted state.
+		$this->assertSame( $bulk_task->cursor->get(), get_post( $this->post_ids[1] )->ID );
+		$this->assertEquals( 'apple', get_post( $this->post_ids[1] )->post_content );
+
+		$this->assertEquals( 'banana', get_post( $this->post_ids[0] )->post_content );
 	}
 }

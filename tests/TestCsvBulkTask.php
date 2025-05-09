@@ -95,4 +95,36 @@ class TestCsvBulkTask extends Test_Case {
 		$this->assertCount( 1, $posts );
 		$this->assertEquals( 'Hello', $posts[0]->post_title );
 	}
+
+	/**
+	 * Test the halt task.
+	 */
+	public function test_halt_task(): void {
+		$bulk_task = new Bulk_Task( 'test_halt_task_run' );
+		$bulk_task->run(
+			[ 'csv' => $this->csv ],
+			function ( $row, $line ): bool {
+
+				// Halt after the first row.
+				if ( 1 === $line ) {
+					return false;
+				}
+
+				self::factory()->post->create( [ 'post_title' => $row[1] ] );
+
+				return true;
+			},
+			'csv'
+		);
+		$posts = get_posts(); // @phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.get_posts_get_posts
+
+		// Check the cursor reflects the halted state.
+		$this->assertSame( $bulk_task->cursor->get(), 1 );
+
+		$names = wp_list_pluck( $posts, 'post_title' );
+
+		$this->assertCount( 1, $names );
+		$this->assertEquals( [ 'Hello' ], $names );
+		$this->assertNotEquals( [ 'Hiii', 'Hi', 'Lorem' ], $names );
+	}
 }

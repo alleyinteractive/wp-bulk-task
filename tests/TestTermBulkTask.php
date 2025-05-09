@@ -115,12 +115,41 @@ class TestTermBulkTask extends Test_Case {
 				'taxonomy'   => [ 'category', 'post_tag' ],
 				'hide_empty' => false,
 			],
-			function ( $_, $__, $term_query ) use ( &$query ): void {
+			function ( $_, $term_query ) use ( &$query ): void {
 				$query = $term_query;
 			},
 			'wp_term'
 		);
 
 		$this->assertInstanceOf( 'WP_Term_Query', $query );
+	}
+
+	/**
+	 * Test the halt task.
+	 */
+	public function test_halt_task(): void {
+		$bulk_task = new Bulk_Task( 'test_halt_task_run' );
+		$bulk_task->run(
+			[
+				'taxonomy'   => [ 'category', 'post_tag' ],
+				'hide_empty' => false,
+			],
+			function ( WP_Term $term ): bool {
+				if ( 'apple' === $term->name ) {
+					return false;
+				}
+
+				wp_update_term( $term->term_id, $term->taxonomy, [ 'name' => 'banana' ] );
+
+				return true;
+			},
+			'wp_term'
+		);
+
+		// Check the cursor reflects the halted state.
+		$this->assertSame( $bulk_task->cursor->get(), $this->term_ids[1] );
+		$this->assertEquals( 'apple', get_term( $this->term_ids[1] )->name );
+
+		$this->assertEquals( 'apple', get_term( $this->term_ids[0] )->name );
 	}
 }

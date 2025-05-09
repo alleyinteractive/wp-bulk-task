@@ -110,12 +110,39 @@ class TestUserBulkTask extends Test_Case {
 
 		( new Bulk_Task( 'test_query_run' ) )->run(
 			[],
-			function ( $_, $__, $user_query ) use ( &$query ): void {
+			function ( $_, $user_query ) use ( &$query ): void {
 				$query = $user_query;
 			},
 			'wp_user'
 		);
 
 		$this->assertInstanceOf( 'WP_User_Query', $query );
+	}
+
+	/**
+	 * Test the halt task.
+	 */
+	public function test_halt_task(): void {
+		$bulk_task = new Bulk_Task( 'test_halt_task_run' );
+		$bulk_task->run(
+			[],
+			function ( WP_User $user ): bool {
+
+				if ( $user->user_login === 'mattrew' ) {
+					return false;
+				}
+
+				$user->set_role( 'editor' );
+
+				return true;
+			},
+			'wp_user'
+		);
+
+		// Check the cursor reflects the halted state.
+		$this->assertSame( $bulk_task->cursor->get(), $this->user_ids[1] );
+		$this->assertEquals( [ 'contributor' ], get_user_by( 'ID', $this->user_ids[1] )->roles );
+
+		$this->assertEquals( [ 'editor' ], get_user_by( 'ID', $this->user_ids[0] )->roles );
 	}
 }
