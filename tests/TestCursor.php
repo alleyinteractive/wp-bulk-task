@@ -18,6 +18,7 @@ use Mantle\Testkit\Test_Case;
  * @package alleyinteractive/wp-bulk-task
  */
 class TestCursor extends Test_Case {
+
 	/**
 	 * Tests the cursor lifecycle (does not exist, created, updated, removed).
 	 */
@@ -33,7 +34,7 @@ class TestCursor extends Test_Case {
 	/**
 	 * Tests that the cursor option is not autoloaded.
 	 *
-	 * @global wpdb $wpdb WordPress database abstraction object.
+	 * @global \wpdb $wpdb WordPress database abstraction object.
 	 */
 	public function test_cursor_option_not_autoload(): void {
 		global $wpdb;

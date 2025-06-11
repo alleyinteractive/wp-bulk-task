@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace Alley\WP_Bulk_Task\Tests;
 
 use Alley\WP_Bulk_Task\Bulk_Task;
-use Mantle\Testing\Concerns\Refresh_Database;
 use Mantle\Testkit\Test_Case;
 use WP_User;
 
@@ -20,7 +19,6 @@ use WP_User;
  * @package alleyinteractive/wp-bulk-task
  */
 class TestUserBulkTask extends Test_Case {
-	use Refresh_Database;
 
 	/**
 	 * Stores an array of created user IDs used in tests.
@@ -117,5 +115,27 @@ class TestUserBulkTask extends Test_Case {
 		);
 
 		$this->assertInstanceOf( 'WP_User_Query', $query );
+	}
+
+	/**
+	 * Test custom after batch callback.
+	 *
+	 * @throws \Exception Thrown when invalid callback is used.
+	 */
+	public function test_custom_after_batch_callback(): void {
+		( new Bulk_Task( 'test_custom_after_batch_callback' ) )->run(
+			[],
+			function ( WP_User $user ): void {
+				$user->set_role( 'editor' );
+			},
+			'wp_user',
+			function (): void {
+				// Revert the first user's role back to contributor.
+				( new WP_User( $this->user_ids[0] ) )->set_role( 'contributor' );
+			}
+		);
+
+		$this->assertEquals( [ 'contributor' ], get_user_by( 'ID', $this->user_ids[0] )->roles );
+		$this->assertEquals( [ 'editor' ], get_user_by( 'ID', $this->user_ids[1] )->roles );
 	}
 }

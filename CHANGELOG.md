@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2.0.0 [Unreleased]
 
+### Added
+
+- Allow an implementer-provided callback to be executed after each batch.
+
 ### Updated
 
 - PHPStan: upgraded to 2.0.

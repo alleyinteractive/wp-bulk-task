@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace Alley\WP_Bulk_Task\Tests;
 
 use Alley\WP_Bulk_Task\Bulk_Task;
-use Mantle\Testing\Concerns\Refresh_Database;
 use Mantle\Testkit\Test_Case;
 
 /**
@@ -19,14 +18,13 @@ use Mantle\Testkit\Test_Case;
  * @package alleyinteractive/wp-bulk-task
  */
 class TestCsvBulkTask extends Test_Case {
-	use Refresh_Database;
 
 	/**
 	 * The CSV file path.
 	 *
 	 * @var string
 	 */
-	public $csv;
+	private string $csv;
 
 	/**
 	 * Actions to be taken before each function in this class is run.
@@ -94,5 +92,28 @@ class TestCsvBulkTask extends Test_Case {
 		$posts = get_posts(); // @phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.get_posts_get_posts
 		$this->assertCount( 1, $posts );
 		$this->assertEquals( 'Hello', $posts[0]->post_title );
+	}
+
+	/**
+	 * Test custom after batch callback.
+	 *
+	 * @throws \Exception Thrown when invalid callback is used.
+	 */
+	public function test_custom_after_batch_callback(): void {
+		( new Bulk_Task( 'test_run' ) )->run(
+			[ 'csv' => $this->csv ],
+			function ( $row ): void {
+				self::factory()->post->create( [ 'post_title' => $row[1] ] );
+			},
+			'csv',
+			function (): void {
+				self::factory()->post->create( [ 'post_title' => 'after-callback-post' ] );
+			}
+		);
+
+		$posts = get_posts(); // @phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.get_posts_get_posts
+		$this->assertCount( 5, $posts );
+		$this->assertEquals( 'after-callback-post', $posts[0]->post_title );
+		$this->assertEquals( 'Hello', $posts[1]->post_title );
 	}
 }

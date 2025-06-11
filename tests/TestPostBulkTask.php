@@ -8,7 +8,6 @@
 namespace Alley\WP_Bulk_Task\Tests;
 
 use Alley\WP_Bulk_Task\Bulk_Task;
-use Mantle\Testing\Concerns\Refresh_Database;
 use Mantle\Testkit\Test_Case;
 
 use WP_Post;
@@ -19,7 +18,6 @@ use WP_Post;
  * @package alleyinteractive/wp-bulk-task
  */
 class TestPostBulkTask extends Test_Case {
-	use Refresh_Database;
 
 	/**
 	 * Stores an array of created post IDs used in tests.
@@ -33,6 +31,7 @@ class TestPostBulkTask extends Test_Case {
 	 */
 	public function setUp(): void {
 		parent::setUp();
+
 		$this->post_ids = [
 			self::factory()->post->create(
 				[
@@ -103,6 +102,8 @@ class TestPostBulkTask extends Test_Case {
 
 	/**
 	 * Tests getting the current query object.
+	 *
+	 * @throws \Exception Thrown when invalid callback is used.
 	 */
 	public function test_get_query(): void {
 		$query = null;
@@ -115,5 +116,35 @@ class TestPostBulkTask extends Test_Case {
 		);
 
 		$this->assertInstanceOf( 'WP_Query', $query );
+	}
+
+	/**
+	 * Test custom after batch callback.
+	 *
+	 * @throws \Exception Thrown when invalid callback is used.
+	 */
+	public function test_custom_after_batch_callback(): void {
+		self::factory()->post->create_many(
+			200,
+			[ 'post_type' => 'post' ]
+		);
+
+		$post_ids = [];
+
+		( new Bulk_Task( 'test_custom_after_batch_callback' ) )->run(
+			[ 'post_type' => 'post' ],
+			function ( WP_Post $post ) use ( &$post_ids ): void {
+				$post_ids[] = $post->ID;
+			},
+			'wp_post',
+			function ( array $context ) use ( &$post_ids ): void {
+				// Reset the post IDs after the batch is processed.
+				if ( 100 < $context['min_id'] ) {
+					$post_ids = [];
+				}
+			},
+		);
+
+		$this->assertEmpty( $post_ids, 'Post IDs should be reset with the custom after batch callback.' );
 	}
 }

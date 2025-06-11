@@ -67,13 +67,23 @@ class Bulk_Task {
 	protected string $object_hash;
 
 	/**
+	 * Callback to execute after each batch is processed.
+	 *
+	 * @var null|callable
+	 */
+	protected $after_batch_callback = null;
+
+	/**
 	 * Constructor. Accepts a unique key, which is used to keep track of the
 	 * cursor within the database.
 	 *
 	 * @param string    $key      A unique key for this bulk task, used to manage the cursor.
 	 * @param ?Progress $progress An object to handle progress updates as the task runs.
 	 */
-	public function __construct( public string $key, private ?Progress $progress = null ) {
+	public function __construct(
+		public string $key,
+		private ?Progress $progress = null,
+	) {
 		$this->cursor = new Cursor( $key );
 	}
 
@@ -134,6 +144,18 @@ class Bulk_Task {
 
 		// Update progress.
 		$this->progress?->set_current( $this->min_id );
+
+		// Execute the after batch callback if provided.
+		if ( is_callable( $this->after_batch_callback ) ) {
+			call_user_func(
+				$this->after_batch_callback,
+				[
+					'cursor' => $this->cursor,
+					'min_id' => $this->min_id,
+					'max_id' => $this->max_id,
+				]
+			);
+		}
 	}
 
 	/**
@@ -278,17 +300,22 @@ class Bulk_Task {
 	 *                               The callable will be passed an object of the
 	 *                               specified type.
 	 * @param string       $object_type Type of object to query.
+	 * @param ?callable    $after_batch_callback Optional. Callback to run after each batch is processed.
 	 */
-	public function run( array $args, callable $callable, string $object_type = 'wp_post' ): void {
-		if ( ! method_exists( $this, "run_{$object_type}_query" ) ) {
-			return;
-		}
-
+	public function run(
+		array $args,
+		callable $callable,
+		string $object_type = 'wp_post',
+		?callable $after_batch_callback = null,
+	): void {
 		$method_callback = [ $this, "run_{$object_type}_query" ];
 
 		if ( ! is_callable( $method_callback ) ) {
 			throw new \Exception( 'Invalid method callback.' );
 		}
+
+		// Set the user provided callback to run after each batch.
+		$this->after_batch_callback = $after_batch_callback;
 
 		call_user_func( $method_callback, $args, $callable );
 	}
