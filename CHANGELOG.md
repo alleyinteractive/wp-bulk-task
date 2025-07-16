@@ -6,8 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 1.1.0 - 2025-07-17
 
-- Added a new `Null_Cursor` class that does not store the cursor in the database.
-- Deprecated the `Cursor` class, which now extends the `Alley\WP_Bulk_Task\Cursor\Option_Cursor` class.
+- Migrate cursors to a interface: `Alley\WP_Bulk_Task\Cursor\Cursor`.
+- Deprecated the `Alley\WP_Bulk_Task\Cursor` class, which now extends the
+  `Alley\WP_Bulk_Task\Cursor\Option_Cursor` class. Preserved the old class for
+  backward compatibility.
+- Added a new `Alley\WP_Bulk_Task\Cursor\Memory_Cursor` class that does not
+  store the cursor in the database.
 
 ## 1.0.0 - 2024-08-13
 
