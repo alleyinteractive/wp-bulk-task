@@ -26,9 +26,9 @@ class Bulk_Task {
 	/**
 	 * The cursor associated with this bulk task.
 	 *
-	 * @var Cursor
+	 * @var Cursor\Cursor
 	 */
-	public Cursor $cursor;
+	public Cursor\Cursor $cursor;
 
 	/**
 	 * Store the max post ID from the posts table so we know when we are done.
@@ -63,11 +63,12 @@ class Bulk_Task {
 	 * Constructor. Accepts a unique key, which is used to keep track of the
 	 * cursor within the database.
 	 *
-	 * @param string    $key      A unique key for this bulk task, used to manage the cursor.
-	 * @param ?Progress $progress An object to handle progress updates as the task runs.
+	 * @param string             $key      A unique key for this bulk task, used to manage the cursor.
+	 * @param Progress|null      $progress An object to handle progress updates as the task runs.
+	 * @param Cursor\Cursor|null $cursor An optional cursor object to use for this task.
 	 */
-	public function __construct( public string $key, private ?Progress $progress = null ) {
-		$this->cursor = new Cursor( $key );
+	public function __construct( public string $key, private ?Progress $progress = null, ?Cursor\Cursor $cursor = null ) {
+		$this->cursor = $cursor ?? new Cursor\Option_Cursor( $key );
 	}
 
 	/**
