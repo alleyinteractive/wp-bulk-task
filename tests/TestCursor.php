@@ -9,7 +9,8 @@ declare(strict_types=1);
 
 namespace Alley\WP_Bulk_Task\Tests;
 
-use Alley\WP_Bulk_Task\Cursor;
+use Alley\WP_Bulk_Task\Cursor\Memory_Cursor;
+use Alley\WP_Bulk_Task\Cursor\Option_Cursor;
 use Mantle\Testkit\Test_Case;
 
 /**
@@ -22,7 +23,7 @@ class TestCursor extends Test_Case {
 	 * Tests the cursor lifecycle (does not exist, created, updated, removed).
 	 */
 	public function test_lifecycle(): void {
-		$cursor = new Cursor( 'test-cursor' );
+		$cursor = new Option_Cursor( 'test-cursor' );
 		$this->assertEquals( 0, $cursor->get() );
 		$cursor->set( 1234 );
 		$this->assertEquals( 1234, $cursor->get() );
@@ -44,7 +45,7 @@ class TestCursor extends Test_Case {
 		// Ensure the value is indeed empty.
 		$this->assertEmpty( get_option( $option_name_key ) );
 
-		$cursor = new Cursor( $option_name );
+		$cursor = new Option_Cursor( $option_name );
 		$this->assertEquals( 0, $cursor->get() );
 		$cursor->set( 1234 );
 
@@ -62,5 +63,22 @@ class TestCursor extends Test_Case {
 		$option_autoloaded = $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM $wpdb->options WHERE option_name = %s", $option_name_key ) );
 
 		$this->assertNull( $option_autoloaded );
+	}
+
+	/**
+	 * Test for the Memory_Cursor class.
+	 */
+	public function test_memory_cursor(): void {
+		$cursor = new Memory_Cursor();
+
+		$this->assertEquals( 0, $cursor->get() );
+
+		$cursor->set( 1234 );
+
+		$this->assertEquals( 1234, $cursor->get() );
+
+		$cursor->reset();
+
+		$this->assertEquals( 0, $cursor->get() );
 	}
 }
